@@ -3,6 +3,8 @@ from pydantic import BaseModel
 import mysql.connector
 import os
 from datetime import date
+from fastapi.responses import JSONResponse
+
 
 app = FastAPI()
 

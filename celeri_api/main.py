@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import mysql.connector
-from datetime import date
+from datetime import date, datetime, timedelta
 from fastapi.responses import JSONResponse
 import json
 
@@ -108,3 +108,34 @@ def update_loue(jour: str, payload: dict):
         cursor.close()
         conn.close()
 
+@app.post("/loue/init")
+def init_dates(data: dict):
+    try:
+        start = datetime.strptime(data["start"], "%Y-%m-%d").date()
+        end = datetime.strptime(data["end"], "%Y-%m-%d").date()
+        statut = bool(data.get("statut", False))
+
+        if end < start:
+            raise HTTPException(status_code=400, detail="end date must be after start date")
+
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        current = start
+        while current <= end:
+            cursor.execute(
+                """
+                INSERT INTO airbnb_loue (jour, statut)
+                VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE statut = VALUES(statut)
+                """,
+                (current, statut)
+            )
+            current += timedelta(days=1)
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return {"status": "ok", "message": f"{(end - start).days + 1} days processed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

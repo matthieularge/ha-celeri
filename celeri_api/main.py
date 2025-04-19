@@ -66,7 +66,7 @@ class LoueEntry(BaseModel):
 
 @app.get("/loue/{jour}")
 def get_loue(jour: str):
-    logger.info(f"GET /loue/{jour} called")
+    logger.info(f"🔎 GET /loue/{jour}")
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -75,21 +75,21 @@ def get_loue(jour: str):
         row = cursor.fetchone()
 
         if row:
-            statut = bool(row[0])
-            logger.info(f"Entry found for {jour}: statut={statut}")
+            loue = bool(row[0])
+            logger.debug(f"✔️ Date trouvée: {jour} => loue={loue}")
         else:
-            logger.info(f"No entry for {jour}, inserting default (False)")
+            logger.warning(f"❗ Date {jour} absente — ajout avec loue=False")
             cursor.execute(
                 "INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)",
                 (jour, False)
             )
             conn.commit()
-            statut = False
+            loue = False
 
-        return {"jour": jour, "statut": statut}
+        return {"jour": jour, "loue": loue}
 
     except Exception as e:
-        logger.error(f"Error in get_loue: {e}")
+        logger.error(f"❌ Erreur GET /loue/{jour}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
@@ -97,28 +97,32 @@ def get_loue(jour: str):
 
 @app.post("/loue")
 def add_loue(entry: LoueEntry):
-    logger.info(f"POST /loue called with jour={entry.jour}, loue={entry.loue}")
+    logger.info(f"➕ POST /loue : {entry}")
     conn = get_connection()
     cursor = conn.cursor()
+
     try:
-        cursor.execute("INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)", (entry.jour, entry.loue))
+        cursor.execute(
+            "INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)",
+            (entry.jour, entry.loue)
+        )
         conn.commit()
-        logger.info("Entry added successfully.")
-    except mysql.connector.IntegrityError as e:
-        logger.warning(f"IntegrityError on insert: {e}")
+        logger.debug("✔️ Entrée ajoutée")
+        return {"message": "Ajouté"}
+    except mysql.connector.IntegrityError:
+        logger.warning("⚠️ Date déjà existante")
         raise HTTPException(status_code=409, detail="Date déjà existante")
     except Exception as e:
-        logger.error(f"Error in add_loue: {e}")
+        logger.error(f"❌ Erreur POST /loue : {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
         conn.close()
-    return {"message": "Ajouté"}
 
 @app.put("/loue/{jour}")
 def update_loue(jour: str, payload: dict):
-    logger.info(f"PUT /loue/{jour} with payload={payload}")
-    statut = payload.get("statut", False)
+    logger.info(f"🛠️ PUT /loue/{jour} : {payload}")
+    loue = payload.get("loue", False)
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -127,24 +131,23 @@ def update_loue(jour: str, payload: dict):
         exists = cursor.fetchone()[0] > 0
 
         if exists:
-            logger.info(f"Updating existing entry for {jour}")
             cursor.execute(
                 "UPDATE airbnb_loue SET loue = %s WHERE jour = %s",
-                (statut, jour)
+                (loue, jour)
             )
+            logger.debug("🔄 Mise à jour effectuée")
         else:
-            logger.info(f"Inserting new entry for {jour}")
             cursor.execute(
                 "INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)",
-                (jour, statut)
+                (jour, loue)
             )
+            logger.debug("➕ Ajout effectué")
 
         conn.commit()
-        return {"message": "Statut mis à jour", "jour": jour, "statut": statut}
-
+        return {"message": "Mise à jour effectuée", "jour": jour, "loue": loue}
     except Exception as e:
         conn.rollback()
-        logger.error(f"Error in update_loue: {e}")
+        logger.error(f"❌ Erreur PUT /loue/{jour} : {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
@@ -152,43 +155,39 @@ def update_loue(jour: str, payload: dict):
 
 @app.post("/loue/init")
 def init_dates(data: dict):
-    logger.info(f"POST /loue/init with data={data}")
+    logger.info(f"📅 POST /loue/init : {data}")
     try:
         start = datetime.strptime(data["start"], "%Y-%m-%d").date()
         end = datetime.strptime(data["end"], "%Y-%m-%d").date()
-        statut = bool(data.get("statut", False))
+        loue = bool(data.get("loue", False))
 
         if end < start:
-            logger.warning("End date is before start date.")
+            logger.warning("⛔ Date de fin antérieure à la date de début")
             raise HTTPException(status_code=400, detail="end date must be after start date")
 
         conn = get_connection()
         cursor = conn.cursor()
 
-        count = 0
         current = start
+        count = 0
         while current <= end:
             cursor.execute(
                 """
                 INSERT INTO airbnb_loue (jour, loue)
                 VALUES (%s, %s)
-                ON DUPLICATE KEY UPDATE loue = VALUES(statut)
+                ON DUPLICATE KEY UPDATE loue = VALUES(loue)
                 """,
-                (current, statut)
+                (current, loue)
             )
             current += timedelta(days=1)
             count += 1
 
         conn.commit()
-        logger.info(f"{count} jours insérés ou mis à jour entre {start} et {end}")
-        return {"status": "ok", "message": f"{count} days processed"}
-
+        logger.info(f"✅ {count} jours traités entre {start} et {end}")
+        return {"status": "ok", "message": f"{count} jours traités"}
     except Exception as e:
-        logger.error(f"Error in init_dates: {e}")
+        logger.error(f"❌ Erreur dans /loue/init : {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        try:
-            cursor.close()
-            conn.close()
-        except:
-            pass
+        cursor.close()
+        conn.close()

@@ -12,10 +12,10 @@ def load_config():
 config = load_config()
 
 DB_CONFIG = {
-    "host": config["db_host"],
-    "user": config["db_user"],
-    "password": config["db_password"],
-    "database": config["db_name"]
+    "host": config["DB_HOST"],
+    "user": config["DB_USER"],
+    "password": config["DB_PASSWORD"],
+    "database": config["DB_NAME"]
 }
 
 app = FastAPI()

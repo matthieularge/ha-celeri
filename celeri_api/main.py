@@ -33,6 +33,24 @@ DB_CONFIG = {
 
 app = FastAPI()
 
+from fastapi.requests import Request
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    ip = request.client.host
+    path = request.url.path
+    method = request.method
+
+    logger.info(f"🔹 {method} request to {path} from {ip}")
+
+    try:
+        response = await call_next(request)
+        return response
+    except Exception as e:
+        logger.error(f"❌ Error during {method} {path} from {ip}: {e}")
+        raise
+        
+
 @app.get("/")
 def read_root():
     logger.info("GET / called")

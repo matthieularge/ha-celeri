@@ -1,0 +1,15 @@
+{
+  "name": "Celeri API Add-on",
+  "version": "1.0",
+  "slug": "celeri_api",
+  "description": "Un add-on qui expose une simple API REST",
+  "startup": "application",
+  "boot": "auto",
+  "arch": [
+    "armv7",
+    "aarch64"
+  ],
+  "ports": {
+    "8000/tcp": 8000
+  }
+}

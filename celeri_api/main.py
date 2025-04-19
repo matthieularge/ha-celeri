@@ -54,14 +54,39 @@ def add_loue(entry: LoueEntry):
     finally:
         conn.close()
     return {"message": "Ajouté"}
+    
 
 @app.put("/loue/{jour}")
-def update_loue(jour: date, entry: LoueEntry):
+def update_loue(jour: str, payload: dict):
+    statut = payload.get("statut", False)
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE airbnb_loue SET loue = %s WHERE jour = %s", (entry.loue, jour))
-    conn.commit()
-    if cursor.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Date non trouvée")
-    conn.close()
-    return {"message": "Modifié"}
+
+    try:
+        # Vérifie si la date existe déjà
+        cursor.execute("SELECT COUNT(*) FROM airbnb_loue WHERE jour = %s", (jour,))
+        exists = cursor.fetchone()[0] > 0
+
+        if exists:
+            # Met à jour l'entrée existante
+            cursor.execute(
+                "UPDATE airbnb_loue SET statut = %s WHERE jour = %s",
+                (statut, jour)
+            )
+        else:
+            # Crée une nouvelle entrée
+            cursor.execute(
+                "INSERT INTO airbnb_loue (jour, statut) VALUES (%s, %s)",
+                (jour, statut)
+            )
+
+        conn.commit()
+        return {"message": "Statut mis à jour", "jour": jour, "statut": statut}
+
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+

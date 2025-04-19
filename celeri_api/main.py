@@ -27,11 +27,7 @@ def read_root():
 @app.get("/hello")
 def hello():
     return {"message": "Hello from Celeri addon"}
-    
 
-class LoueEntry(BaseModel):
-    jour: date
-    loue: bool
 
 def get_connection():
     return mysql.connector.connect(**DB_CONFIG)
@@ -53,6 +49,13 @@ def test_db():
             results.append({"host": host, "status": "error", "message": str(e)})
 
     return JSONResponse(content={"results": results})
+
+
+    
+
+class LoueEntry(BaseModel):
+    jour: date
+    loue: bool
 
 @app.get("/loue/{jour}")
 def read_loue(jour: date):

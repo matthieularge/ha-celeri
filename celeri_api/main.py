@@ -159,7 +159,7 @@ def init_dates(data: dict):
     try:
         start = datetime.strptime(data["start"], "%Y-%m-%d").date()
         end = datetime.strptime(data["end"], "%Y-%m-%d").date()
-        loue = bool(data.get("loue", False))
+        loue = bool(data.get("loue", True))
 
         if end < start:
             logger.warning("⛔ Date de fin antérieure à la date de début")

@@ -4,7 +4,20 @@ import mysql.connector
 import os
 from datetime import date
 from fastapi.responses import JSONResponse
+import json
 
+def load_config():
+    with open("/data/options.json") as f:
+        return json.load(f)
+
+config = load_config()
+
+DB_CONFIG = {
+    "host": config["db_host"],
+    "user": config["db_user"],
+    "password": config["db_password"],
+    "database": config["db_name"]
+}
 
 app = FastAPI()
 
@@ -15,14 +28,7 @@ def read_root():
 @app.get("/hello")
 def hello():
     return {"message": "Hello from Celeri addon"}
-
-
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "mariadb"),
-    "user": os.getenv("DB_USER", "user"),
-    "password": os.getenv("DB_PASSWORD", "password"),
-    "database": os.getenv("DB_NAME", "homeassistant")
-}
+    
 
 class LoueEntry(BaseModel):
     jour: date

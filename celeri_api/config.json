@@ -1,6 +1,6 @@
 {
   "name": "Celeri API Add-on",
-  "version": "1.0.003",
+  "version": "1.0.004",
   "slug": "celeri_api",
   "description": "Celeri API Add-on",
   "startup": "application",

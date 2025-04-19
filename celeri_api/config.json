@@ -13,9 +13,9 @@
     "8000/tcp": 8000
   },
   "options": {
-    "DB_HOST": "mariadb",
-    "DB_USER": "user",
-    "DB_PASSWORD": "password",
+    "DB_HOST": "core-mariadb",
+    "DB_USER": "homeassistant",
+    "DB_PASSWORD": "RATA4pi",
     "DB_NAME": "homeassistant"
   },
   "schema": {

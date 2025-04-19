@@ -1,8 +1,8 @@
 {
   "name": "Celeri API Add-on",
-  "version": "1.0",
+  "version": "1.1",
   "slug": "celeri_api",
-  "description": "Un add-on qui expose une simple API REST",
+  "description": "Celeri API Add-on",
   "startup": "application",
   "boot": "auto",
   "arch": [
@@ -11,5 +11,17 @@
   ],
   "ports": {
     "8000/tcp": 8000
+  },
+  "options": {
+    "DB_HOST": "mariadb",
+    "DB_USER": "user",
+    "DB_PASSWORD": "password",
+    "DB_NAME": "homeassistant"
+  },
+  "schema": {
+    "DB_HOST": "str",
+    "DB_USER": "str",
+    "DB_PASSWORD": "str",
+    "DB_NAME": "str"
   }
 }

@@ -1,11 +1,10 @@
 {
-  "name": "Simple API Add-on",
+  "name": "Celeri API Add-on",
   "version": "1.0",
-  "slug": "simple_api_addon",
+  "slug": "celeriAPI",
   "description": "Un add-on qui expose une simple API REST",
   "startup": "application",
   "boot": "auto",
-  "homeassistant": "2023.0.0",
   "arch": [
     "armv7",
     "aarch64"

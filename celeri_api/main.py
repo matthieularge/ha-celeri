@@ -71,7 +71,7 @@ def get_loue(jour: str):
     cursor = conn.cursor()
 
     try:
-        cursor.execute("SELECT statut FROM airbnb_loue WHERE jour = %s", (jour,))
+        cursor.execute("SELECT loue FROM airbnb_loue WHERE jour = %s", (jour,))
         row = cursor.fetchone()
 
         if row:
@@ -80,7 +80,7 @@ def get_loue(jour: str):
         else:
             logger.info(f"No entry for {jour}, inserting default (False)")
             cursor.execute(
-                "INSERT INTO airbnb_loue (jour, statut) VALUES (%s, %s)",
+                "INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)",
                 (jour, False)
             )
             conn.commit()
@@ -129,13 +129,13 @@ def update_loue(jour: str, payload: dict):
         if exists:
             logger.info(f"Updating existing entry for {jour}")
             cursor.execute(
-                "UPDATE airbnb_loue SET statut = %s WHERE jour = %s",
+                "UPDATE airbnb_loue SET loue = %s WHERE jour = %s",
                 (statut, jour)
             )
         else:
             logger.info(f"Inserting new entry for {jour}")
             cursor.execute(
-                "INSERT INTO airbnb_loue (jour, statut) VALUES (%s, %s)",
+                "INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)",
                 (jour, statut)
             )
 
@@ -170,9 +170,9 @@ def init_dates(data: dict):
         while current <= end:
             cursor.execute(
                 """
-                INSERT INTO airbnb_loue (jour, statut)
+                INSERT INTO airbnb_loue (jour, loue)
                 VALUES (%s, %s)
-                ON DUPLICATE KEY UPDATE statut = VALUES(statut)
+                ON DUPLICATE KEY UPDATE loue = VALUES(statut)
                 """,
                 (current, statut)
             )

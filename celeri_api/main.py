@@ -29,6 +29,24 @@ class LoueEntry(BaseModel):
 def get_connection():
     return mysql.connector.connect(**DB_CONFIG)
 
+@app.get("/testdb")
+def test_db():
+    hosts_to_try = ["core-mariadb", "mariadb", "172.30.33.2"]
+    results = []
+
+    for host in hosts_to_try:
+        try:
+            test_config = DB_CONFIG.copy()
+            test_config["host"] = host
+            conn = mysql.connector.connect(**test_config)
+            if conn.is_connected():
+                results.append({"host": host, "status": "success"})
+                conn.close()
+        except Exception as e:
+            results.append({"host": host, "status": "error", "message": str(e)})
+
+    return JSONResponse(content={"results": results})
+
 @app.get("/loue/{jour}")
 def read_loue(jour: date):
     conn = get_connection()

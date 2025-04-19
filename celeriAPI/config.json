@@ -1,0 +1,16 @@
+{
+  "name": "Simple API Add-on",
+  "version": "1.0",
+  "slug": "simple_api_addon",
+  "description": "Un add-on qui expose une simple API REST",
+  "startup": "application",
+  "boot": "auto",
+  "homeassistant": "2023.0.0",
+  "arch": [
+    "armv7",
+    "aarch64"
+  ],
+  "ports": {
+    "8000/tcp": 8000
+  }
+}

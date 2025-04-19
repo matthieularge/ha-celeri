@@ -32,15 +32,33 @@ class LoueEntry(BaseModel):
     loue: bool
 
 @app.get("/loue/{jour}")
-def read_loue(jour: date):
+def get_loue(jour: str):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT loue FROM airbnb_loue WHERE jour = %s", (jour,))
-    result = cursor.fetchone()
-    conn.close()
-    if result is None:
-        raise HTTPException(status_code=404, detail="Date non trouvée")
-    return {"jour": jour, "loue": bool(result[0])}
+
+    try:
+        cursor.execute("SELECT statut FROM airbnb_loue WHERE jour = %s", (jour,))
+        row = cursor.fetchone()
+
+        if row:
+            statut = bool(row[0])
+        else:
+            # Créer une entrée par défaut si elle n'existe pas
+            cursor.execute(
+                "INSERT INTO airbnb_loue (jour, statut) VALUES (%s, %s)",
+                (jour, False)
+            )
+            conn.commit()
+            statut = False
+
+        return {"jour": jour, "statut": statut}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
 
 @app.post("/loue")
 def add_loue(entry: LoueEntry):

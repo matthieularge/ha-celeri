@@ -170,7 +170,8 @@ def loue_sync_calendar():
 
         for check_date in [today, tomorrow]:
             reserved = is_reserved(AIRBNB_CAL_URL, check_date)
-            upsert_loue_date(cur, check_date, reserved)
+            if reserved:
+                upsert_loue_date(cur, check_date, reserved)
 
         conn.commit()
         return {"status": "success", "message": "Synchronisation terminée."}
@@ -214,6 +215,11 @@ def is_reserved(cal_url: str, check_date: date) -> bool:
         return False
 
 def upsert_loue_date(cursor, jour: date, loue: bool):
+    
+    logger.info(date)
+    logger.info(jour.isoformat(),)
+    logger.info(bool)
+    
     cursor.execute(
         """
         INSERT INTO airbnb_loue (jour, loue)

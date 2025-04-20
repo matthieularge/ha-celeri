@@ -160,6 +160,7 @@ def init_dates(data: dict):
         start = datetime.strptime(data["start"], "%Y-%m-%d").date()
         end = datetime.strptime(data["end"], "%Y-%m-%d").date()
         loue = bool(data.get("loue", True))
+        weekend = bool(data.get("weekend", False))  
 
         if end < start:
             logger.warning("⛔ Date de fin antérieure à la date de début")
@@ -171,13 +172,15 @@ def init_dates(data: dict):
         current = start
         count = 0
         while current <= end:
+            is_weekend = current.weekday() >= 5  # 5 = Saturday, 6 = Sunday
+            statut = weekend if is_weekend else loue
             cursor.execute(
                 """
                 INSERT INTO airbnb_loue (jour, loue)
                 VALUES (%s, %s)
                 ON DUPLICATE KEY UPDATE loue = VALUES(loue)
                 """,
-                (current, loue)
+                (current, statut)
             )
             current += timedelta(days=1)
             count += 1

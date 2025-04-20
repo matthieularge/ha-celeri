@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 from fastapi.responses import JSONResponse
 import json
 from ics import Calendar
+import requests
 
 # -----------------------------
 # Logging configuration

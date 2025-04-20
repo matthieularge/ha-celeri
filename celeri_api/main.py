@@ -184,6 +184,9 @@ def loue_sync_calendar():
 
 def is_reserved(cal_url: str, check_date: date) -> bool:
     try:
+        logger.info(cal_url)
+        logger.info(check_date)
+        
         response = requests.get(cal_url)
         response.raise_for_status()
         calendar = Calendar(response.text)

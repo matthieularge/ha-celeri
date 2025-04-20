@@ -170,6 +170,7 @@ def loue_sync_calendar():
 
         for check_date in [today, tomorrow]:
             reserved = is_reserved(AIRBNB_CAL_URL, check_date)
+            upsert_loue_date(cur, check_date, reserved)
             if reserved:
                 upsert_loue_date(cur, check_date, reserved)
 

@@ -170,7 +170,6 @@ def loue_sync_calendar():
 
         for check_date in [today, tomorrow]:
             reserved = is_reserved(AIRBNB_CAL_URL, check_date)
-            upsert_loue_date(cur, check_date, reserved)
             if reserved:
                 upsert_loue_date(cur, check_date, reserved)
 
@@ -187,9 +186,6 @@ def loue_sync_calendar():
 
 def is_reserved(cal_url: str, check_date: date) -> bool:
     try:
-        logger.info(cal_url)
-        logger.info(check_date)
-        
         response = requests.get(cal_url)
         response.raise_for_status()
         calendar = Calendar(response.text)
@@ -197,8 +193,7 @@ def is_reserved(cal_url: str, check_date: date) -> bool:
         # On filtre uniquement les événements "Reserved" proches de la date recherchée
         for event in calendar.timeline:  # ⚠️ `timeline` trie les événements par date
             
-            logger.info(event.name)
-            logger.info(event.begin.date())
+            logger.info(event.begin.date() + " " + event.name)
             
             if event.name != "Reserved":
                 continue
@@ -216,8 +211,7 @@ def is_reserved(cal_url: str, check_date: date) -> bool:
         return False
 
 def upsert_loue_date(cursor, jour: date, loue: bool):
-    logger.info(jour.isoformat())
-    logger.info(loue)
+    logger.info("Mis à jour : " +jour.isoformat() + " " + event.loue)
     cursor.execute(
         """
         INSERT INTO airbnb_loue (jour, loue)

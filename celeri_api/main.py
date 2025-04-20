@@ -65,6 +65,204 @@ def get_connection():
     logger.debug("Creating new database connection")
     return mysql.connector.connect(**DB_CONFIG)    
 
+
+
+@app.get("/presence/{jour}")
+def get_presence(jour: str):
+    logger.info(f"🔎 GET /presence/{jour}")
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT presence FROM presence WHERE jour = %s", (jour,))
+        row = cursor.fetchone()
+
+        if row:
+            presence = bool(row[0])
+            logger.debug(f"✔️ Date trouvée: {jour} => presence={presence}")
+        else:
+            logger.warning(f"❗ Date {jour} absente — ajout avec presence=False")
+            cursor.execute(
+                "INSERT INTO presence (jour, presence) VALUES (%s, %s)",
+                (jour, False)
+            )
+            conn.commit()
+            loue = False
+
+        return {"jour": jour, "presence": presence}
+
+    except Exception as e:
+        logger.error(f"❌ Erreur GET /presence/{jour}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.put("/presence/{jour}")
+def update_presence(jour: str, payload: dict):
+    logger.info(f"🛠️ PUT /presence/{jour} : {payload}")
+    presence = payload.get("presence", False)
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT COUNT(*) FROM presence WHERE jour = %s", (jour,))
+        exists = cursor.fetchone()[0] > 0
+
+        if exists:
+            cursor.execute(
+                "UPDATE presence SET presence = %s WHERE jour = %s",
+                (presence, jour)
+            )
+            logger.debug("🔄 Mise à jour effectuée")
+        else:
+            cursor.execute(
+                "INSERT INTO presence (jour, presence) VALUES (%s, %s)",
+                (jour, presence)
+            )
+            logger.debug("➕ Ajout effectué")
+
+        conn.commit()
+        return {"message": "Mise à jour effectuée", "jour": jour, "presence": presence}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"❌ Erreur PUT /presence/{jour} : {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.get("/teletravail/{jour}")
+def get_teletravail(jour: str):
+    logger.info(f"🔎 GET /teletravail/{jour}")
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT teletravail FROM teletravail WHERE jour = %s", (jour,))
+        row = cursor.fetchone()
+
+        if row:
+            teletravail = bool(row[0])
+            logger.debug(f"✔️ Date trouvée: {jour} => teletravail={teletravail}")
+        else:
+            logger.warning(f"❗ Date {jour} absente — ajout avec teletravail=False")
+            cursor.execute(
+                "INSERT INTO teletravail (jour, teletravail) VALUES (%s, %s)",
+                (jour, False)
+            )
+            conn.commit()
+            loue = False
+
+        return {"jour": jour, "teletravail": teletravail}
+
+    except Exception as e:
+        logger.error(f"❌ Erreur GET /teletravail/{jour}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.put("/teletravail/{jour}")
+def update_teletravail(jour: str, payload: dict):
+    logger.info(f"🛠️ PUT /teletravail/{jour} : {payload}")
+    teletravail = payload.get("teletravail", False)
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT COUNT(*) FROM teletravail WHERE jour = %s", (jour,))
+        exists = cursor.fetchone()[0] > 0
+
+        if exists:
+            cursor.execute(
+                "UPDATE teletravail SET teletravail = %s WHERE jour = %s",
+                (teletravail, jour)
+            )
+            logger.debug("🔄 Mise à jour effectuée")
+        else:
+            cursor.execute(
+                "INSERT INTO teletravail (jour, teletravail) VALUES (%s, %s)",
+                (jour, teletravail)
+            )
+            logger.debug("➕ Ajout effectué")
+
+        conn.commit()
+        return {"message": "Mise à jour effectuée", "jour": jour, "teletravail": teletravail}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"❌ Erreur PUT /teletravail/{jour} : {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.get("/cheminee/{jour}")
+def get_cheminee(jour: str):
+    logger.info(f"🔎 GET /cheminee/{jour}")
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT cheminee FROM cheminee WHERE jour = %s", (jour,))
+        row = cursor.fetchone()
+
+        if row:
+            cheminee = bool(row[0])
+            logger.debug(f"✔️ Date trouvée: {jour} => cheminee={cheminee}")
+        else:
+            logger.warning(f"❗ Date {jour} absente — ajout avec cheminee=False")
+            cursor.execute(
+                "INSERT INTO cheminee (jour, cheminee) VALUES (%s, %s)",
+                (jour, False)
+            )
+            conn.commit()
+            loue = False
+
+        return {"jour": jour, "cheminee": cheminee}
+
+    except Exception as e:
+        logger.error(f"❌ Erreur GET /cheminee/{jour}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.put("/cheminee/{jour}")
+def update_cheminee(jour: str, payload: dict):
+    logger.info(f"🛠️ PUT /cheminee/{jour} : {payload}")
+    cheminee = payload.get("cheminee", False)
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT COUNT(*) FROM cheminee WHERE jour = %s", (jour,))
+        exists = cursor.fetchone()[0] > 0
+
+        if exists:
+            cursor.execute(
+                "UPDATE cheminee SET cheminee = %s WHERE jour = %s",
+                (cheminee, jour)
+            )
+            logger.debug("🔄 Mise à jour effectuée")
+        else:
+            cursor.execute(
+                "INSERT INTO teletravail (jour, cheminee) VALUES (%s, %s)",
+                (jour, cheminee)
+            )
+            logger.debug("➕ Ajout effectué")
+
+        conn.commit()
+        return {"message": "Mise à jour effectuée", "jour": jour, "cheminee": cheminee}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"❌ Erreur PUT /cheminee/{jour} : {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+
 class LoueEntry(BaseModel):
     jour: date
     loue: bool

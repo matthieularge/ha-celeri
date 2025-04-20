@@ -209,7 +209,7 @@ def is_reserved(cal_url: str, check_date: date) -> bool:
 
         return False
     except Exception as e:
-        logger.error("Erreur lors de la lecture du calendrier Airbnb : {e}")
+        logger.error(f"Erreur lors de la lecture du calendrier Airbnb : {e}")
         return False
 
 def upsert_loue_date(cursor, jour: date, loue: bool):

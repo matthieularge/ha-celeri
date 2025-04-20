@@ -174,7 +174,7 @@ def loue_sync_calendar():
         conn.commit()
         return {"status": "success", "message": "Synchronisation terminée."}
 
-    except mariadb.Error as e:
+    except Exception as e:
         logger.error(f"❌ Erreur POST /loue_sync_calendar : {e}")
         raise HTTPException(status_code=500, detail="Erreur base de données")
 

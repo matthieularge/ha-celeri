@@ -158,40 +158,6 @@ def update_loue(jour: str, payload: dict):
         conn.close()
 
 
-def is_reserved(cal_url: str, check_date: date) -> bool:
-    try:
-        response = requests.get(cal_url)
-        response.raise_for_status()
-        calendar = Calendar(response.text)
-
-        # On filtre uniquement les événements "Reserved" proches de la date recherchée
-        for event in calendar.timeline:  # ⚠️ `timeline` trie les événements par date
-            if event.name != "Reserved":
-                continue
-
-            # Si l'événement commence après la date recherchée, on peut s'arrêter
-            if event.begin.date() > check_date:
-                break
-
-            if event.begin.date() <= check_date < event.end.date():
-                return True
-
-        return False
-    except Exception as e:
-        print(f"Erreur lors de la lecture du calendrier Airbnb : {e}")
-        return False
-
-def upsert_loue_date(cursor, jour: date, loue: bool):
-    cursor.execute(
-        """
-        INSERT INTO airbnb_loue (jour, loue)
-        VALUES (?, ?)
-        ON DUPLICATE KEY UPDATE loue = VALUES(loue)
-        """,
-        (jour.isoformat(), loue)
-    )
-
-
 @app.post("/loue_sync_calendar")
 def loue_sync_calendar():
     try:
@@ -209,13 +175,52 @@ def loue_sync_calendar():
         return {"status": "success", "message": "Synchronisation terminée."}
 
     except mariadb.Error as e:
-        print(f"Erreur MariaDB : {e}")
+        logger.error(f"❌ Erreur POST /loue_sync_calendar : {e}")
         raise HTTPException(status_code=500, detail="Erreur base de données")
 
     finally:
         if conn:
             conn.close()
+
+def is_reserved(cal_url: str, check_date: date) -> bool:
+    try:
+        response = requests.get(cal_url)
+        response.raise_for_status()
+        calendar = Calendar(response.text)
+
+        # On filtre uniquement les événements "Reserved" proches de la date recherchée
+        for event in calendar.timeline:  # ⚠️ `timeline` trie les événements par date
             
+            logger.info(event.name)
+            logger.info(event.begin.date())
+            
+            if event.name != "Reserved":
+                continue
+
+            # Si l'événement commence après la date recherchée, on peut s'arrêter
+            if event.begin.date() > check_date:
+                break
+
+            if event.begin.date() <= check_date < event.end.date():
+                return True
+
+        return False
+    except Exception as e:
+        logger.error("Erreur lors de la lecture du calendrier Airbnb : {e}")
+        return False
+
+def upsert_loue_date(cursor, jour: date, loue: bool):
+    cursor.execute(
+        """
+        INSERT INTO airbnb_loue (jour, loue)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE loue = VALUES(loue)
+        """,
+        (jour.isoformat(), loue)
+    )
+
+
+
 
 @app.post("/loue/init")
 def init_dates(data: dict):

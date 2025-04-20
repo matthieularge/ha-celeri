@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN pip install fastapi uvicorn gunicorn mysql-connector-python ics
+RUN pip install fastapi uvicorn gunicorn mysql-connector-python ics requests
 
 COPY main.py .
 COPY run.sh .

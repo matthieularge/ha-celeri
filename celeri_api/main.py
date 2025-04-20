@@ -87,7 +87,7 @@ def get_presence(jour: str):
                 (jour, False)
             )
             conn.commit()
-            loue = False
+            presence = False
 
         return {"jour": jour, "presence": presence}
 
@@ -152,7 +152,7 @@ def get_teletravail(jour: str):
                 (jour, False)
             )
             conn.commit()
-            loue = False
+            teletravail = False
 
         return {"jour": jour, "teletravail": teletravail}
 
@@ -217,7 +217,7 @@ def get_cheminee(jour: str):
                 (jour, False)
             )
             conn.commit()
-            loue = False
+            cheminee = False
 
         return {"jour": jour, "cheminee": cheminee}
 

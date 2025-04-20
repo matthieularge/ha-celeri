@@ -5,6 +5,7 @@ import mysql.connector
 from datetime import date, datetime, timedelta
 from fastapi.responses import JSONResponse
 import json
+from ics import Calendar
 
 # -----------------------------
 # Logging configuration
@@ -30,6 +31,9 @@ DB_CONFIG = {
     "password": config["DB_PASSWORD"],
     "database": config["DB_NAME"]
 }
+
+AIRBNB_CAL_URL = "https://www.airbnb.fr/calendar/ical/32053854.ics?s=bee9bbc3a51315a4fa27ea2a09621aef"
+
 
 app = FastAPI()
 
@@ -152,6 +156,60 @@ def update_loue(jour: str, payload: dict):
     finally:
         cursor.close()
         conn.close()
+
+
+def is_reserved(cal_url: str, check_date: date) -> bool:
+    try:
+        response = requests.get(cal_url)
+        response.raise_for_status()
+        calendar = Calendar(response.text)
+
+        for event in calendar.events:
+            if event.name == "Reserved":
+                start_date = event.begin.date()
+                end_date = event.end.date()
+                if start_date <= check_date < end_date:
+                    return True
+        return False
+    except Exception as e:
+        print(f"Erreur lors de la lecture du calendrier Airbnb : {e}")
+        return False
+
+def upsert_loue_date(cursor, jour: date, loue: bool):
+    cursor.execute(
+        """
+        INSERT INTO airbnb_loue (jour, loue)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE loue = VALUES(loue)
+        """,
+        (jour.isoformat(), loue)
+    )
+
+
+@app.post("/loue_sync_calendar")
+def loue_sync_calendar():
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        today = date.today()
+        tomorrow = today + timedelta(days=1)
+
+        for check_date in [today, tomorrow]:
+            reserved = is_reserved(AIRBNB_CAL_URL, check_date)
+            upsert_loue_date(cur, check_date, reserved)
+
+        conn.commit()
+        return {"status": "success", "message": "Synchronisation terminée."}
+
+    except mariadb.Error as e:
+        print(f"Erreur MariaDB : {e}")
+        raise HTTPException(status_code=500, detail="Erreur base de données")
+
+    finally:
+        if conn:
+            conn.close()
+            
 
 @app.post("/loue/init")
 def init_dates(data: dict):

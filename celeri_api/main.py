@@ -216,15 +216,12 @@ def is_reserved(cal_url: str, check_date: date) -> bool:
         return False
 
 def upsert_loue_date(cursor, jour: date, loue: bool):
-    
-    logger.info(date)
-    logger.info(jour.isoformat(),)
-    logger.info(bool)
-    
+    logger.info(jour.isoformat())
+    logger.info(loue)
     cursor.execute(
         """
         INSERT INTO airbnb_loue (jour, loue)
-        VALUES (?, ?)
+        VALUES (%s, %s)
         ON DUPLICATE KEY UPDATE loue = VALUES(loue)
         """,
         (jour.isoformat(), loue)

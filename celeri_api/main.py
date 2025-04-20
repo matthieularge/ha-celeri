@@ -164,12 +164,18 @@ def is_reserved(cal_url: str, check_date: date) -> bool:
         response.raise_for_status()
         calendar = Calendar(response.text)
 
-        for event in calendar.events:
-            if event.name == "Reserved":
-                start_date = event.begin.date()
-                end_date = event.end.date()
-                if start_date <= check_date < end_date:
-                    return True
+        # On filtre uniquement les événements "Reserved" proches de la date recherchée
+        for event in calendar.timeline:  # ⚠️ `timeline` trie les événements par date
+            if event.name != "Reserved":
+                continue
+
+            # Si l'événement commence après la date recherchée, on peut s'arrêter
+            if event.begin.date() > check_date:
+                break
+
+            if event.begin.date() <= check_date < event.end.date():
+                return True
+
         return False
     except Exception as e:
         print(f"Erreur lors de la lecture du calendrier Airbnb : {e}")

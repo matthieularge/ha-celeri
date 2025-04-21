@@ -21,7 +21,7 @@ import requests
 
 # plus tard :
 # Rapport
-HTTPS
+# HTTPS depuis application mobile, réseau local, réseau externe
 # Meteo automatisation permettant de stocker temp ext + temp salon + temp chambre + airnb bas + airbnb haut. Une table par capteur et par heure
 
 

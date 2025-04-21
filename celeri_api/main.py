@@ -475,3 +475,52 @@ def init_dates(data: dict):
     finally:
         cursor.close()
         conn.close()
+
+
+
+class CapteurHeureUpdate(BaseModel):
+    capteur: str
+    jour: date
+    heure: int  # entre 0 et 23
+    valeur: float
+
+
+@app.post("/capteurs/heure")
+def update_capteur_heure(payload: CapteurHeureUpdate):
+    logger.info(f"🌡️ POST /capteurs/heure : {payload}")
+    heure_colonne = f"h{payload.heure:02d}"
+
+    if payload.heure < 0 or payload.heure > 23:
+        raise HTTPException(status_code=400, detail="Heure invalide (doit être entre 0 et 23)")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Vérifie si une ligne existe déjà
+        cursor.execute(
+            "SELECT COUNT(*) FROM capteurs WHERE jour = %s AND capteur = %s",
+            (payload.jour, payload.capteur)
+        )
+        exists = cursor.fetchone()[0] > 0
+
+        if exists:
+            query = f"UPDATE capteurs SET {heure_colonne} = %s WHERE jour = %s AND capteur = %s"
+            cursor.execute(query, (payload.valeur, payload.jour, payload.capteur))
+        else:
+            colonnes = ['jour', 'capteur', heure_colonne]
+            valeurs = [payload.jour, payload.capteur, payload.valeur]
+            placeholders = ', '.join(['%s'] * len(valeurs))
+            colonnes_sql = ', '.join(colonnes)
+            query = f"INSERT INTO capteurs ({colonnes_sql}) VALUES ({placeholders})"
+            cursor.execute(query, valeurs)
+
+        conn.commit()
+        return {"message": "Capteur enregistré", "capteur": payload.capteur, "heure": payload.heure}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"❌ Erreur /capteurs/heure : {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()

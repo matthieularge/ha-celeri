@@ -10,7 +10,7 @@ import requests
 
 # TODO
 # tester tout mes switchs, y compris depuis Home
-# reccourci qui aliment Presence et Teletravail
+# raccourci qui aliment Presence (gaffe syncro VB) et Teletravail
 # sync calendrier airbnb : bug format date
 # reprise données
 # Rapport
@@ -85,13 +85,13 @@ def get_presence(jour: str):
             presence = bool(row[0])
             logger.debug(f"✔️ Date trouvée: {jour} => presence={presence}")
         else:
-            logger.warning(f"❗ Date {jour} absente — ajout avec presence=True")
+            logger.warning(f"❗ Date {jour} absente — ajout avec presence=False")
             cursor.execute(
                 "INSERT INTO presence (jour, presence) VALUES (%s, %s)",
-                (jour, True)
+                (jour, False)
             )
             conn.commit()
-            presence = True
+            presence = False
 
         return {"jour": jour, "presence": presence}
 

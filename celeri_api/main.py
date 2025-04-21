@@ -22,6 +22,7 @@ import requests
 # plus tard :
 # Rapport
 # HTTPS depuis application mobile, réseau local, réseau externe : CONFLIT avec Direct Connection UNIFI
+# est il possible de configurer Home Assistant en HTTPS mais sur un port différent de 443 ?
 # Meteo automatisation permettant de stocker temp ext + temp salon + temp chambre + airnb bas + airbnb haut. Une table par capteur et par heure
 
 

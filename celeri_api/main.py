@@ -9,12 +9,12 @@ from ics import Calendar
 import requests
 
 # TODO
-# tester tout mes switchs, y compris depuis Home
-# raccourci qui aliment Presence (gaffe syncro VB) et Teletravail
-# sync calendrier airbnb : bug format date
-# reprise données
+# tester tout mes switchs, y compris depuis Home : OK
+# raccourcis qui alimentent Presence (gaffe syncro VB) et Teletravail : OK reste à supprimer les appels vers ancienne webapp
+# sync calendrier airbnb : bug format date 
+# reprise données : OK sauf rapport et météo
 # supp Homebridge et déplacer les automatismes vers HA (gafef condition coté Home / Eve)
-# déployer le module sur Landes pour Présence (et plus tard capteur temp par pièce) + automatisation si qqun est présent alors presnce = oui
+# déployer le module sur Landes pour Présence (et plus tard capteur temp par pièce) + automatisation si qqun est présent alors presence = OK, reste à faire capteur
 # scrypted
 # actual budget
 # icloud docker et dnla sur ex pi4
@@ -23,6 +23,7 @@ import requests
 # Rapport
 # Meteo automatisation permettant de stocker temp ext + temp salon + temp chmabre + airnb bas + airbnb haut. Une table par capteur et par heure
 # table piece_capteur_h0 h1 h2... h23
+# humidity ?
 
 
 logging.basicConfig(

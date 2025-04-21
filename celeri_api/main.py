@@ -541,12 +541,13 @@ class EjacEnum(str, Enum):
     faciale = "faciale"
     bouche = "bouche"
     anale = "anale"
+    aucune = "aucune"
 
 class RapportEntry(BaseModel):
     jour: date
     lieu: LieuEnum = Field(default=LieuEnum.chambre)
     lingerie: LingerieEnum = Field(default=LingerieEnum.pj)
-    ejac: Optional[EjacEnum] = None
+    ejac: EjacEnum = Field(default=EjacEnum.aucune)
     fellation: bool = False
     cunnilingus: bool = False
     levrette: bool = False
@@ -586,7 +587,7 @@ def upsert_rapport(entry: RapportEntry):
                 entry.jour,
                 entry.lieu.value,
                 entry.lingerie.value,
-                entry.ejac.value if entry.ejac else None,
+                entry.ejac.value,
                 entry.fellation,
                 entry.cunnilingus,
                 entry.levrette,

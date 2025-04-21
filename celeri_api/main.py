@@ -14,9 +14,10 @@ import requests
 # sync calendrier airbnb : bug format date
 # reprise données
 # supp Homebridge et déplacer les automatismes vers HA (gafef condition coté Home / Eve)
-# déployer le module sur Landes pour Présence (et plus tard capteur temp par pièce)
+# déployer le module sur Landes pour Présence (et plus tard capteur temp par pièce) + automatisation si qqun est présent alors presnce = oui
 # scrypted
 # actual budget
+# icloud docker et dnla sur ex pi4
 
 # plus tard :
 # Rapport

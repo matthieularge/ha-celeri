@@ -10,21 +10,17 @@ import requests
 from enum import Enum
 
 # TODO
-# tester tout mes switchs, y compris depuis Home : OK
 # raccourcis qui alimentent Presence (gaffe syncro VB) et Teletravail : OK reste à supprimer les appels vers ancienne webapp
-# sync calendrier airbnb : bug format date 
-# reprise données : OK sauf rapport et météo
+# sync calendrier airbnb : BUG format date 
+# reprise données : OK sauf rapport
 # supp Homebridge et déplacer les automatismes vers HA (gafef condition coté Home / Eve)
-# déployer le module sur Landes pour Présence (et plus tard capteur temp par pièce) + automatisation si qqun est présent alors presence = OK, reste à faire capteur
 # scrypted
-# actual budget
+# actual budget sur ex pi4
 # icloud docker et dnla sur ex pi4
 
 # plus tard :
-# Rapport
 # HTTPS depuis application mobile, réseau local, réseau externe : CONFLIT avec Direct Connection UNIFI
-# est il possible de configurer Home Assistant en HTTPS mais sur un port différent de 443 ?
-# Meteo automatisation permettant de stocker temp ext + temp salon + temp chambre + airnb bas + airbnb haut. Une table par capteur et par heure
+# est il possible de configurer Home Assistant en HTTPS mais sur un port différent de 443 ? OUI
 
 
 

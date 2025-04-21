@@ -23,6 +23,7 @@ from typing import Optional
 # HTTPS depuis application mobile, réseau local, réseau externe : CONFLIT avec Direct Connection UNIFI
 # est il possible de configurer Home Assistant en HTTPS mais sur un port différent de 443 ? OUI
 
+# stats sur les datas capteurs et rapport : api qui renvoie les resultats de selects à afficher dans une zone HA ?
 
 
 logging.basicConfig(

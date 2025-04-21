@@ -8,6 +8,7 @@ import json
 from ics import Calendar
 import requests
 from enum import Enum
+from typing import Optional
 
 # TODO
 # raccourcis qui alimentent Presence (gaffe syncro VB) et Teletravail : OK reste à supprimer les appels vers ancienne webapp

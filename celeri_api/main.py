@@ -12,17 +12,13 @@ from typing import Optional
 
 # TODO
 # raccourcis qui alimentent Presence (gaffe syncro VB) et Teletravail : OK reste à supprimer les appels vers ancienne webapp
-# sync calendrier airbnb : BUG format date 
-# reprise données : OK sauf rapport
 # supp Homebridge et déplacer les automatismes vers HA (gafef condition coté Home / Eve)
 # scrypted
 # actual budget sur ex pi4
 # icloud docker et dnla sur ex pi4
 
 # plus tard :
-# HTTPS depuis application mobile, réseau local, réseau externe : CONFLIT avec Direct Connection UNIFI
-# est il possible de configurer Home Assistant en HTTPS mais sur un port différent de 443 ? OUI
-
+# HTTPS depuis application mobile, réseau local, réseau externe : configurer Home Assistant en HTTPS mais sur un port différent de 443 ? OUI
 # stats sur les datas capteurs et rapport : api qui renvoie les resultats de selects à afficher dans une zone HA ?
 
 

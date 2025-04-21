@@ -401,8 +401,8 @@ def is_reserved(cal_url: str, check_date: date) -> bool:
 
         # On filtre uniquement les événements "Reserved" proches de la date recherchée
         for event in calendar.timeline:  # ⚠️ `timeline` trie les événements par date
-            
-            logger.info(event.begin.date() + " " + event.name)
+
+            logger.info(f"{event.begin.date().isoformat()} {event.name}")
             
             if event.name != "Reserved":
                 continue
@@ -420,7 +420,8 @@ def is_reserved(cal_url: str, check_date: date) -> bool:
         return False
 
 def upsert_loue_date(cursor, jour: date, loue: bool):
-    logger.info("Mis à jour : " +jour.isoformat() + " " + event.loue)
+    logger.info(f"Mis à jour : {jour.isoformat()} loué={loue}")
+    
     cursor.execute(
         """
         INSERT INTO airbnb_loue (jour, loue)

@@ -81,13 +81,13 @@ def get_presence(jour: str):
             presence = bool(row[0])
             logger.debug(f"✔️ Date trouvée: {jour} => presence={presence}")
         else:
-            logger.warning(f"❗ Date {jour} absente — ajout avec presence=False")
+            logger.warning(f"❗ Date {jour} absente — ajout avec presence=True")
             cursor.execute(
                 "INSERT INTO presence (jour, presence) VALUES (%s, %s)",
-                (jour, False)
+                (jour, True)
             )
             conn.commit()
-            presence = False
+            presence = True
 
         return {"jour": jour, "presence": presence}
 

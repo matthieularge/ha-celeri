@@ -9,6 +9,8 @@ from ics import Calendar
 import requests
 
 # TODO
+# tester tout mes swiychs, y compris depuis Home
+# sync calendrier airbnb : bug format date
 # reprise données
 # Rapport
 # Meteo automatisation permettant de stocker temp ext + temp salon + temp chmabre + airnb bas + airbnb haut. Une table par capteur et par heure

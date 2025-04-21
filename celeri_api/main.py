@@ -524,7 +524,10 @@ def update_capteur_heure(payload: CapteurHeureUpdate):
         conn.close()
 
 
-
+class LieuEnum(str, Enum):
+    chambre = "chambre"
+    salon = "salon"
+    autre = "autre"
 
 class LingerieEnum(str, Enum):
     nue = "nue"

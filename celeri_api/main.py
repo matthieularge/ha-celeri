@@ -8,18 +8,18 @@ import json
 from ics import Calendar
 import requests
 
-# -----------------------------
-# Logging configuration
-# -----------------------------
+# TODO
+# reprise données
+# Rapport
+# Meteo automatisation permettant de stocker temp ext + temp salon + temp chmabre + airnb bas + airbnb haut. Une table par capteur et par heure
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# -----------------------------
-# Load DB config
-# -----------------------------
 def load_config():
     with open("/data/options.json") as f:
         return json.load(f)

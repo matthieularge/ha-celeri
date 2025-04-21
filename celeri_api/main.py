@@ -1,12 +1,13 @@
 import logging
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import mysql.connector
 from datetime import date, datetime, timedelta
 from fastapi.responses import JSONResponse
 import json
 from ics import Calendar
 import requests
+from enum import Enum
 
 # TODO
 # tester tout mes switchs, y compris depuis Home : OK
@@ -521,6 +522,85 @@ def update_capteur_heure(payload: CapteurHeureUpdate):
     except Exception as e:
         conn.rollback()
         logger.error(f"❌ Erreur /capteurs/heure : {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
+class LingerieEnum(str, Enum):
+    nue = "nue"
+    string = "string"
+    pj = "pj"
+
+class EjacEnum(str, Enum):
+    corps = "corps"
+    vagin = "vagin"
+    faciale = "faciale"
+    bouche = "bouche"
+    anale = "anale"
+
+class RapportEntry(BaseModel):
+    jour: date
+    lieu: LieuEnum = Field(default=LieuEnum.chambre)
+    lingerie: LingerieEnum = Field(default=LingerieEnum.pj)
+    ejac: Optional[EjacEnum] = None
+    fellation: bool = False
+    cunnilingus: bool = False
+    levrette: bool = False
+    missionnaire: bool = False
+    andromaque: bool = False
+    sodomie: bool = False
+    fouet: bool = False
+
+
+@app.post("/rapport")
+def upsert_rapport(entry: RapportEntry):
+    logger.info(f"📘 POST /rapport : {entry}")
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """
+            INSERT INTO rapport (
+                jour, lieu, lingerie, ejac,
+                fellation, cunnilingus, levrette,
+                missionnaire, andromaque, sodomie, fouet
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                lieu = VALUES(lieu),
+                lingerie = VALUES(lingerie),
+                ejac = VALUES(ejac),
+                fellation = VALUES(fellation),
+                cunnilingus = VALUES(cunnilingus),
+                levrette = VALUES(levrette),
+                missionnaire = VALUES(missionnaire),
+                andromaque = VALUES(andromaque),
+                sodomie = VALUES(sodomie),
+                fouet = VALUES(fouet)
+            """,
+            (
+                entry.jour,
+                entry.lieu.value,
+                entry.lingerie.value,
+                entry.ejac.value if entry.ejac else None,
+                entry.fellation,
+                entry.cunnilingus,
+                entry.levrette,
+                entry.missionnaire,
+                entry.andromaque,
+                entry.sodomie,
+                entry.fouet
+            )
+        )
+        conn.commit()
+        return {"status": "ok", "message": f"Rapport enregistré pour {entry.jour}"}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"❌ Erreur POST /rapport : {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()

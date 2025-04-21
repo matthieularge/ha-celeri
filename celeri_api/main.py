@@ -9,7 +9,8 @@ from ics import Calendar
 import requests
 
 # TODO
-# tester tout mes swiychs, y compris depuis Home
+# tester tout mes switchs, y compris depuis Home
+# reccourci qui aliment Presence et Teletravail
 # sync calendrier airbnb : bug format date
 # reprise données
 # Rapport

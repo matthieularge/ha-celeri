@@ -20,6 +20,7 @@ from typing import Optional
 # plus tard :
 # HTTPS depuis application mobile, réseau local, réseau externe : configurer Home Assistant en HTTPS mais sur un port différent de 443 ? OUI
 # stats sur les datas capteurs et rapport : api qui renvoie les resultats de selects à afficher dans une zone HA ?
+# repo GitHub en privé
 
 
 logging.basicConfig(

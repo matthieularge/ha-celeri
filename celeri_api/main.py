@@ -14,10 +14,11 @@ import requests
 # sync calendrier airbnb : bug format date
 # reprise données
 # supp Homebridge et déplacer les automatismes vers HA (gafef condition coté Home / Eve)
+# déployer le module sur Landes pour Présence (et plus tard capteur temp par pièce)
 # scrypted
 # actual budget
 
-# plsu tard :
+# plus tard :
 # Rapport
 # Meteo automatisation permettant de stocker temp ext + temp salon + temp chmabre + airnb bas + airbnb haut. Une table par capteur et par heure
 # table piece_capteur_h0 h1 h2... h23

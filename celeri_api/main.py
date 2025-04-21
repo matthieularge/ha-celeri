@@ -15,6 +15,7 @@ import requests
 # reprise données
 # Rapport
 # Meteo automatisation permettant de stocker temp ext + temp salon + temp chmabre + airnb bas + airbnb haut. Une table par capteur et par heure
+# table piece_capteur_h0 h1 h2... h23
 
 
 logging.basicConfig(

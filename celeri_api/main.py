@@ -56,7 +56,7 @@ async def log_requests(request: Request, call_next):
     path = request.url.path
     method = request.method
 
-    logger.info(f"🔹 {method} request to {path} from {ip}")
+    logger.debug(f"🔹 {method} request to {path} from {ip}")
 
     try:
         response = await call_next(request)
@@ -68,7 +68,7 @@ async def log_requests(request: Request, call_next):
 
 @app.get("/")
 def read_root():
-    logger.info("GET / called")
+    logger.debug("GET / called")
     return {"message": "Hello from Celeri addon"}
 
 def get_connection():
@@ -79,7 +79,7 @@ def get_connection():
 
 @app.get("/presence/{jour}")
 def get_presence(jour: str):
-    logger.info(f"🔎 GET /presence/{jour}")
+    logger.debug(f"🔎 GET /presence/{jour}")
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -110,7 +110,7 @@ def get_presence(jour: str):
 
 @app.put("/presence/{jour}")
 def update_presence(jour: str, payload: dict):
-    logger.info(f"🛠️ PUT /presence/{jour} : {payload}")
+    logger.debug(f"🛠️ PUT /presence/{jour} : {payload}")
     presence = payload.get("presence", False)
     conn = get_connection()
     cursor = conn.cursor()
@@ -130,7 +130,7 @@ def update_presence(jour: str, payload: dict):
                 "INSERT INTO presence (jour, presence) VALUES (%s, %s)",
                 (jour, presence)
             )
-            logger.debug("➕ Ajout effectué")
+            logger.warning(f"➕ Date absente: {jour} => presence={presence}")
 
         conn.commit()
         return {"message": "Mise à jour effectuée", "jour": jour, "presence": presence}
@@ -144,7 +144,7 @@ def update_presence(jour: str, payload: dict):
 
 @app.get("/teletravail/{jour}")
 def get_teletravail(jour: str):
-    logger.info(f"🔎 GET /teletravail/{jour}")
+    logger.debug(f"🔎 GET /teletravail/{jour}")
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -175,7 +175,7 @@ def get_teletravail(jour: str):
 
 @app.put("/teletravail/{jour}")
 def update_teletravail(jour: str, payload: dict):
-    logger.info(f"🛠️ PUT /teletravail/{jour} : {payload}")
+    logger.debug(f"🛠️ PUT /teletravail/{jour} : {payload}")
     teletravail = payload.get("teletravail", False)
     conn = get_connection()
     cursor = conn.cursor()
@@ -195,7 +195,7 @@ def update_teletravail(jour: str, payload: dict):
                 "INSERT INTO teletravail (jour, teletravail) VALUES (%s, %s)",
                 (jour, teletravail)
             )
-            logger.debug("➕ Ajout effectué")
+            logger.warning(f"➕ Date absente: {jour} => teletravail={teletravail}")
 
         conn.commit()
         return {"message": "Mise à jour effectuée", "jour": jour, "teletravail": teletravail}
@@ -209,7 +209,7 @@ def update_teletravail(jour: str, payload: dict):
 
 @app.get("/cheminee/{jour}")
 def get_cheminee(jour: str):
-    logger.info(f"🔎 GET /cheminee/{jour}")
+    logger.debug(f"🔎 GET /cheminee/{jour}")
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -240,7 +240,7 @@ def get_cheminee(jour: str):
 
 @app.put("/cheminee/{jour}")
 def update_cheminee(jour: str, payload: dict):
-    logger.info(f"🛠️ PUT /cheminee/{jour} : {payload}")
+    logger.debug(f"🛠️ PUT /cheminee/{jour} : {payload}")
     cheminee = payload.get("cheminee", False)
     conn = get_connection()
     cursor = conn.cursor()
@@ -257,10 +257,10 @@ def update_cheminee(jour: str, payload: dict):
             logger.debug("🔄 Mise à jour effectuée")
         else:
             cursor.execute(
-                "INSERT INTO teletravail (jour, cheminee) VALUES (%s, %s)",
+                "INSERT INTO cheminee (jour, cheminee) VALUES (%s, %s)",
                 (jour, cheminee)
             )
-            logger.debug("➕ Ajout effectué")
+            logger.warning(f"➕ Date absente: {jour} => cheminee={cheminee}")
 
         conn.commit()
         return {"message": "Mise à jour effectuée", "jour": jour, "cheminee": cheminee}
@@ -279,7 +279,7 @@ class LoueEntry(BaseModel):
 
 @app.get("/loue/{jour}")
 def get_loue(jour: str):
-    logger.info(f"🔎 GET /loue/{jour}")
+    logger.debug(f"🔎 GET /loue/{jour}")
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -310,7 +310,7 @@ def get_loue(jour: str):
 
 @app.post("/loue")
 def add_loue(entry: LoueEntry):
-    logger.info(f"➕ POST /loue : {entry}")
+    logger.debug(f"➕ POST /loue : {entry}")
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -320,7 +320,7 @@ def add_loue(entry: LoueEntry):
             (entry.jour, entry.loue)
         )
         conn.commit()
-        logger.debug("✔️ Entrée ajoutée")
+        logger.warning(f"➕ Date absente: {entry.jour} => loue={entry.loue}")
         return {"message": "Ajouté"}
     except mysql.connector.IntegrityError:
         logger.warning("⚠️ Date déjà existante")
@@ -334,7 +334,7 @@ def add_loue(entry: LoueEntry):
 
 @app.put("/loue/{jour}")
 def update_loue(jour: str, payload: dict):
-    logger.info(f"🛠️ PUT /loue/{jour} : {payload}")
+    logger.debug(f"🛠️ PUT /loue/{jour} : {payload}")
     loue = payload.get("loue", False)
     conn = get_connection()
     cursor = conn.cursor()
@@ -354,7 +354,7 @@ def update_loue(jour: str, payload: dict):
                 "INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)",
                 (jour, loue)
             )
-            logger.debug("➕ Ajout effectué")
+            logger.warning(f"➕ Date absente: {jour} => loue={loue}")
 
         conn.commit()
         return {"message": "Mise à jour effectuée", "jour": jour, "loue": loue}
@@ -400,11 +400,11 @@ def is_reserved(cal_url: str, check_date: date) -> bool:
 
         # On filtre uniquement les événements "Reserved" proches de la date recherchée
         for event in calendar.timeline:  # ⚠️ `timeline` trie les événements par date
-
-            logger.info(f"{event.begin.date().isoformat()} {event.name}")
             
             if event.name != "Reserved":
                 continue
+
+            logger.info(f"{event.begin.date().isoformat()} {event.name}")
 
             # Si l'événement commence après la date recherchée, on peut s'arrêter
             if event.begin.date() > check_date:
@@ -435,7 +435,7 @@ def upsert_loue_date(cursor, jour: date, loue: bool):
 
 @app.post("/loue/init")
 def init_dates(data: dict):
-    logger.info(f"📅 POST /loue/init : {data}")
+    logger.debug(f"📅 POST /loue/init : {data}")
     try:
         start = datetime.strptime(data["start"], "%Y-%m-%d").date()
         end = datetime.strptime(data["end"], "%Y-%m-%d").date()
@@ -486,7 +486,7 @@ class CapteurHeureUpdate(BaseModel):
 
 @app.post("/capteurs/heure")
 def update_capteur_heure(payload: CapteurHeureUpdate):
-    logger.info(f"🌡️ POST /capteurs/heure : {payload}")
+    logger.debug(f"🌡️ POST /capteurs/heure : {payload}")
     heure_colonne = f"h{payload.heure:02d}"
 
     if payload.heure < 0 or payload.heure > 23:

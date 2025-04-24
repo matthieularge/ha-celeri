@@ -91,7 +91,7 @@ def get_presence(jour: str):
             presence = bool(row[0])
             logger.debug(f"✔️ Date trouvée: {jour} => presence={presence}")
         else:
-            logger.warning(f"❗ Date {jour} absente — ajout avec presence=False")
+            logger.info(f"❗ Date {jour} absente — ajout avec presence=False")
             cursor.execute(
                 "INSERT INTO presence (jour, presence) VALUES (%s, %s)",
                 (jour, False)
@@ -124,13 +124,13 @@ def update_presence(jour: str, payload: dict):
                 "UPDATE presence SET presence = %s WHERE jour = %s",
                 (presence, jour)
             )
-            logger.debug("🔄 Mise à jour effectuée")
+            logger.info(f"✔️ Date mise à jour : {jour} => presence={presence}")
         else:
             cursor.execute(
                 "INSERT INTO presence (jour, presence) VALUES (%s, %s)",
                 (jour, presence)
             )
-            logger.warning(f"➕ Date absente: {jour} => presence={presence}")
+            logger.info(f"➕ Date absente: {jour} => presence={presence}")
 
         conn.commit()
         return {"message": "Mise à jour effectuée", "jour": jour, "presence": presence}
@@ -156,7 +156,7 @@ def get_teletravail(jour: str):
             teletravail = bool(row[0])
             logger.debug(f"✔️ Date trouvée: {jour} => teletravail={teletravail}")
         else:
-            logger.warning(f"❗ Date {jour} absente — ajout avec teletravail=False")
+            logger.info(f"❗ Date {jour} absente — ajout avec teletravail=False")
             cursor.execute(
                 "INSERT INTO teletravail (jour, teletravail) VALUES (%s, %s)",
                 (jour, False)
@@ -189,13 +189,13 @@ def update_teletravail(jour: str, payload: dict):
                 "UPDATE teletravail SET teletravail = %s WHERE jour = %s",
                 (teletravail, jour)
             )
-            logger.debug("🔄 Mise à jour effectuée")
+            logger.info(f"✔️ Date mise à jour : {jour} => teletravail={teletravail}")
         else:
             cursor.execute(
                 "INSERT INTO teletravail (jour, teletravail) VALUES (%s, %s)",
                 (jour, teletravail)
             )
-            logger.warning(f"➕ Date absente: {jour} => teletravail={teletravail}")
+            logger.info(f"➕ Date absente: {jour} => teletravail={teletravail}")
 
         conn.commit()
         return {"message": "Mise à jour effectuée", "jour": jour, "teletravail": teletravail}
@@ -221,7 +221,7 @@ def get_cheminee(jour: str):
             cheminee = bool(row[0])
             logger.debug(f"✔️ Date trouvée: {jour} => cheminee={cheminee}")
         else:
-            logger.warning(f"❗ Date {jour} absente — ajout avec cheminee=False")
+            logger.info(f"❗ Date {jour} absente — ajout avec cheminee=False")
             cursor.execute(
                 "INSERT INTO cheminee (jour, cheminee) VALUES (%s, %s)",
                 (jour, False)
@@ -254,13 +254,13 @@ def update_cheminee(jour: str, payload: dict):
                 "UPDATE cheminee SET cheminee = %s WHERE jour = %s",
                 (cheminee, jour)
             )
-            logger.debug("🔄 Mise à jour effectuée")
+            logger.info(f"✔️ Date mise à jour : {jour} => cheminee={cheminee}")
         else:
             cursor.execute(
                 "INSERT INTO cheminee (jour, cheminee) VALUES (%s, %s)",
                 (jour, cheminee)
             )
-            logger.warning(f"➕ Date absente: {jour} => cheminee={cheminee}")
+            logger.info(f"➕ Date absente: {jour} => cheminee={cheminee}")
 
         conn.commit()
         return {"message": "Mise à jour effectuée", "jour": jour, "cheminee": cheminee}
@@ -291,7 +291,7 @@ def get_loue(jour: str):
             loue = bool(row[0])
             logger.debug(f"✔️ Date trouvée: {jour} => loue={loue}")
         else:
-            logger.warning(f"❗ Date {jour} absente — ajout avec loue=False")
+            logger.info(f"❗ Date {jour} absente — ajout avec loue=False")
             cursor.execute(
                 "INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)",
                 (jour, False)
@@ -320,7 +320,7 @@ def add_loue(entry: LoueEntry):
             (entry.jour, entry.loue)
         )
         conn.commit()
-        logger.warning(f"➕ Date absente: {entry.jour} => loue={entry.loue}")
+        logger.info(f"➕ Date absente: {entry.jour} => loue={entry.loue}")
         return {"message": "Ajouté"}
     except mysql.connector.IntegrityError:
         logger.warning("⚠️ Date déjà existante")
@@ -348,13 +348,13 @@ def update_loue(jour: str, payload: dict):
                 "UPDATE airbnb_loue SET loue = %s WHERE jour = %s",
                 (loue, jour)
             )
-            logger.debug("🔄 Mise à jour effectuée")
+            logger.info(f"✔️ Date mise à jour : {jour} => loue={loue}")
         else:
             cursor.execute(
                 "INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)",
                 (jour, loue)
             )
-            logger.warning(f"➕ Date absente: {jour} => loue={loue}")
+            logger.info(f"➕ Date absente: {jour} => loue={loue}")
 
         conn.commit()
         return {"message": "Mise à jour effectuée", "jour": jour, "loue": loue}

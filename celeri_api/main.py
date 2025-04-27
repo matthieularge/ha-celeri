@@ -13,6 +13,8 @@ from typing import Optional
 # TODO
 # sites web de laure => dans HA addon nginx
 # Let's encrypt (ou proxy ngix) sur port différent => gaffe accès externe / mariaDB + url depuis App HA
+# ngix RATA4pi@
+
 
 # actual budget en add on
 

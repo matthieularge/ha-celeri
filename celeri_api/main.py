@@ -13,7 +13,7 @@ from typing import Optional
 # TODO
 # scrypted
 # sites web de laure => dans HA addon nginx
-# Let's encrypt sur port différent
+# Let's encrypt sur port différent => gaffe accès externe Unifi + url depuis App HA
 # scrypted en HTTPS ?
 # actual budget en add on
 

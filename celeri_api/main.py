@@ -14,6 +14,7 @@ from typing import Optional
 # scrypted
 # actual budget sur ex pi4
 # icloud docker et dnla sur ex pi4
+# sites web de laure sur ex pi4 (port 80)
 
 # plus tard :
 # HTTPS depuis application mobile, réseau local, réseau externe : configurer Home Assistant en HTTPS mais sur un port différent de 443 ? OUI

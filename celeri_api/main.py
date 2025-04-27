@@ -12,9 +12,13 @@ from typing import Optional
 
 # TODO
 # scrypted
+# sites web de laure => dans HA addon nginx
+# Let's encrypt sur port différent
+# scrypted en HTTPS ?
+# actual budget en add on
+
 # actual budget sur ex pi4
 # icloud docker et dnla sur ex pi4
-# sites web de laure sur ex pi4 (port 80)
 
 # plus tard :
 # HTTPS depuis application mobile, réseau local, réseau externe : configurer Home Assistant en HTTPS mais sur un port différent de 443 ? OUI

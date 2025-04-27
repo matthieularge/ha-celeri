@@ -12,7 +12,8 @@ from typing import Optional
 
 # TODO
 # sites web de laure => dans HA addon nginx
-# Let's encrypt (ou proxy ngix) sur port différent => gaffe accès externe Unifi + url depuis App HA
+# Let's encrypt (ou proxy ngix) sur port différent => gaffe accès externe / mariaDB + url depuis App HA
+
 # actual budget en add on
 
 # actual budget sur ex pi4

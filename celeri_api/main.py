@@ -17,6 +17,7 @@ from typing import Optional
 
 # actual budget sur ex pi4
 # icloud docker et dnla sur ex pi4
+# samba bakcup vers ex pi4
 
 # plus tard :
 # HTTPS depuis application mobile, réseau local, réseau externe : configurer Home Assistant en HTTPS mais sur un port différent de 443 ? OUI

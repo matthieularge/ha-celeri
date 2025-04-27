@@ -11,8 +11,6 @@ from enum import Enum
 from typing import Optional
 
 # TODO
-# raccourcis qui alimentent Presence (gaffe syncro VB) et Teletravail : a tester car visibkement KO, puis reste à supprimer les appels vers ancienne webapp
-# supp Homebridge et déplacer les automatismes vers HA (gaffe condition coté Home / Eve)
 # scrypted
 # actual budget sur ex pi4
 # icloud docker et dnla sur ex pi4

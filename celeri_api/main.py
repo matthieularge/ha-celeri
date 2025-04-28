@@ -14,6 +14,7 @@ from typing import Optional
 # sites web de laure => dans HA addon nginx (voir conf Ovh) ou sur ex pi4
 # Let's encrypt (ou proxy ngix) sur port différent => gaffe accès externe / mariaDB + url depuis App HA
 # ngix RATA4pi@
+# backup rclone vers mega
 
 
 # actual budget en add on

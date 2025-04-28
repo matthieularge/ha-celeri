@@ -15,6 +15,7 @@ from typing import Optional
 # Let's encrypt (ou proxy ngix) sur port différent => gaffe accès externe / mariaDB + url depuis App HA
 # ngix RATA4pi@
 # backup rclone vers mega
+# irrigation ajouter des traceurs ?
 
 
 # actual budget en add on

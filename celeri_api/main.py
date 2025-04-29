@@ -58,6 +58,7 @@ AIRBNB_CAL_URL = "https://www.airbnb.fr/calendar/ical/32053854.ics?s=bee9bbc3a51
 app = FastAPI()
 
 from fastapi.requests import Request
+from fastapi.responses import PlainTextResponse
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):

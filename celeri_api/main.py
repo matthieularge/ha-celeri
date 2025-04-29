@@ -85,12 +85,18 @@ def get_connection():
     return mysql.connector.connect(**DB_CONFIG)    
 
 
+#CREATE TABLE automation_traces (
+#    id INT AUTO_INCREMENT PRIMARY KEY,
+#    automation_name VARCHAR(255),
+#    executed_at DATETIME,
+#    status ENUM('success', 'failure')
+#);
 
-lass Trace(BaseModel):
+class Trace(BaseModel):
     automation_name: str
     status: str
 
-@app.post("/trace")
+@app.post("/trace_automation")
 def trace_automation(trace: Trace):
     conn = get_connection()
     cursor = conn.cursor()

@@ -98,11 +98,41 @@ def trace_automation(trace: Trace):
         "INSERT INTO automation_traces (automation_name, executed_at, status) VALUES (%s, %s, %s)",
         (trace.automation_name, datetime.now(), trace.status)
     )
-    db.commit()
+    conn.commit()
     cursor.close()
-    db.close()
+    conn.close()
     return {"message": "Trace Automatisation enregistrée"}
 
+
+@app.get("/trace_automation_daily_report", response_class=PlainTextResponse)
+def trace_automation_daily_report():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    today = date.today()
+    query = """
+    SELECT automation_name,
+           COUNT(*) as total_runs,
+           SUM(status = 'success') as success_count,
+           SUM(status = 'failure') as failure_count
+    FROM automation_traces
+    WHERE DATE(executed_at) = %s
+    GROUP BY automation_name
+    """
+
+    cursor.execute(query, (today,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    if not rows:
+        return "Aucune automatisation exécutée aujourd'hui."
+
+    report_lines = ["Rapport d'automatisations du " + today.strftime("%d/%m/%Y") + ":\n"]
+    for automation_name, total, success, failure in rows:
+        line = f"- {automation_name} : {total} exécutions ({success} succès, {failure} échecs)"
+        report_lines.append(line)
+        
+    return "\n".join(report_lines)
 
 
 @app.get("/presence/{jour}")

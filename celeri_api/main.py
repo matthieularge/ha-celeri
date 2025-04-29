@@ -12,6 +12,8 @@ from typing import Optional
 
 # TODO
 # refaire avec chatGPT un logger des appel d'automatisations (sans boucle infinie)
+# HTTPS 443 OK à configurer
+# withing ?
 # sites web de laure => dans HA addon nginx (voir conf Ovh) ou sur ex pi4
 # Let's encrypt (ou proxy ngix) sur port différent => gaffe accès externe / mariaDB + url depuis App HA
 # ngix RATA4pi@

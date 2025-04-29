@@ -86,6 +86,25 @@ def get_connection():
 
 
 
+lass Trace(BaseModel):
+    automation_name: str
+    status: str
+
+@app.post("/trace")
+def trace_automation(trace: Trace):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO automation_traces (automation_name, executed_at, status) VALUES (%s, %s, %s)",
+        (trace.automation_name, datetime.now(), trace.status)
+    )
+    db.commit()
+    cursor.close()
+    db.close()
+    return {"message": "Trace Automatisation enregistrée"}
+
+
+
 @app.get("/presence/{jour}")
 def get_presence(jour: str):
     logger.debug(f"🔎 GET /presence/{jour}")

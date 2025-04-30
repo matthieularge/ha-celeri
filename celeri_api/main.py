@@ -24,7 +24,8 @@ from typing import Optional
 # actual budget en add on
 
 # actual budget sur ex pi4
-# icloud docker et dnla sur ex pi4
+# icloud docker e
+# dnla sur ex pi4 : liens symboliques vers icloud docker
 # samba bakcup vers ex pi4
 
 # plus tard :

@@ -115,7 +115,7 @@ def trace_automation_daily_report():
     SELECT automation_name,
            COUNT(*) as total_runs,
            SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as success_count,
-           SUM(CASE WHEN status = 'failure' THEN 1 ELSE 0 END) as failure_count,
+           SUM(CASE WHEN status = 'failure' THEN 1 ELSE 0 END) as failure_count
     FROM automation_traces
     WHERE DATE(executed_at) = %s
     GROUP BY automation_name

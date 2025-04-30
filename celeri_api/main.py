@@ -117,7 +117,7 @@ def trace_automation_daily_report():
            executed_at
     FROM automation_traces
     WHERE DATE(executed_at) = %s
-    ORDER BY ASC executed_at
+    ORDER BY executed_at ASC
     """
 
     cursor.execute(query, (today,))

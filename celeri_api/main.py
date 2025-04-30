@@ -113,12 +113,11 @@ def trace_automation_daily_report():
     today = date.today()
     query = """
     SELECT automation_name,
-           COUNT(*) as total_runs,
-           SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as success_count,
-           SUM(CASE WHEN status = 'failure' THEN 1 ELSE 0 END) as failure_count
+           status,
+           executed_at
     FROM automation_traces
     WHERE DATE(executed_at) = %s
-    GROUP BY automation_name
+    ORDER BY ASC executed_at
     """
 
     cursor.execute(query, (today,))
@@ -129,8 +128,8 @@ def trace_automation_daily_report():
         return "Aucune automatisation exécutée aujourd'hui."
 
     report_lines = ["Rapport d'automatisations du " + today.strftime("%d/%m/%Y") + ":\n"]
-    for automation_name, total, success, failure in rows:
-        line = f"- {automation_name} : {total} exécutions ({success} succès, {failure} échecs)"
+    for automation_name, status, executed_at in rows:
+        line = f"- {executed_at} : {automation_name} ({status})"
         report_lines.append(line)
         
     return "\n".join(report_lines)

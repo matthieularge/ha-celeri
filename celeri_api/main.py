@@ -27,6 +27,7 @@ from typing import Optional
 # icloud docker e
 # dnla sur ex pi4 : liens symboliques vers icloud docker
 # samba bakcup vers ex pi4
+# backup expi4 vers Mega (Rclone) pour backup actual et HomeAssistant et configs docker
 
 # plus tard :
 # HTTPS depuis application mobile, réseau local, réseau externe : configurer Home Assistant en HTTPS mais sur un port différent de 443 ? OUI

@@ -11,28 +11,18 @@ from enum import Enum
 from typing import Optional
 
 # TODO
-# refaire avec chatGPT un logger des appel d'automatisations (sans boucle infinie)
-# HTTPS 443 OK à configurer
 # withing ?
 # sites web de laure => dans HA addon nginx (voir conf Ovh) ou sur ex pi4
-# Let's encrypt (ou proxy ngix) sur port différent => gaffe accès externe / mariaDB + url depuis App HA
-# ngix matthieu.large@icloudcom / RATA4pi@
-# backup rclone vers mega
 # irrigation ajouter des traceurs ?
+# stats sur les datas capteurs et rapport : api qui renvoie les resultats de selects à afficher dans une zone HA ?
+# repo GitHub en privé
 
-
-# actual budget en add on
-
-# actual budget sur ex pi4
-# icloud docker e
+# icloud docker 
 # dnla sur ex pi4 : liens symboliques vers icloud docker
 # samba bakcup vers ex pi4
 # backup expi4 vers Mega (Rclone) pour backup actual et HomeAssistant et configs docker
 
-# plus tard :
-# HTTPS depuis application mobile, réseau local, réseau externe : configurer Home Assistant en HTTPS mais sur un port différent de 443 ? OUI
-# stats sur les datas capteurs et rapport : api qui renvoie les resultats de selects à afficher dans une zone HA ?
-# repo GitHub en privé
+# actual budget en add on pour supprimer le pi4 ?
 
 
 logging.basicConfig(

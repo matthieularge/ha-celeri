@@ -21,7 +21,7 @@ from typing import Optional
 # icloud docker 
 # dnla sur ex pi4 : liens symboliques vers icloud docker
 # samba bakcup vers ex pi4
-# backup expi4 vers Mega (Rclone) pour backup actual et HomeAssistant et configs docker
+# backup expi4 vers Mega (Rclone) pour backup actual et HomeAssistant et configs docker et NGIX + SITE WEB
 
 # actual budget en add on pour supprimer le pi4 ?
 

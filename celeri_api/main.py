@@ -11,9 +11,6 @@ from enum import Enum
 from typing import Optional
 
 # TODO
-# AIRBNB url second agenda (studio)
-# withing ?
-# sites web de laure => dans HA addon nginx (voir conf Ovh) ou sur ex pi4
 # irrigation ajouter des traceurs ?
 # stats sur les datas capteurs et rapport : api qui renvoie les resultats de selects à afficher dans une zone HA ?
 # repo GitHub en privé
@@ -21,7 +18,6 @@ from typing import Optional
 # icloud docker 
 # dnla sur ex pi4 : liens symboliques vers icloud docker
 # samba bakcup vers ex pi4
-# backup expi4 vers Mega (Rclone) pour backup actual et HomeAssistant et configs docker et NGIX + SITE WEB
 
 # actual budget en add on pour supprimer le pi4 ?
 

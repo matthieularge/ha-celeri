@@ -424,12 +424,14 @@ def loue_sync_calendar():
         today = date.today()
         tomorrow = today + timedelta(days=1)
 
+        # calendrier studio
         for check_date in [today, tomorrow]:
-            # calendrier studio
             reserved = is_reserved(AIRBNB_CAL_URL2, check_date)
             if reserved:
                 upsert_loue_date(cur, check_date, reserved)
-            # calendrier maison
+        
+        # calendrier maison
+        for check_date in [today, tomorrow]:
             reserved = is_reserved(AIRBNB_CAL_URL, check_date)
             if reserved:
                 upsert_loue_date(cur, check_date, reserved)

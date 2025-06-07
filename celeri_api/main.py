@@ -11,6 +11,7 @@ from enum import Enum
 from typing import Optional
 
 # TODO
+# AIRBNB url second agenda (studio)
 # withing ?
 # sites web de laure => dans HA addon nginx (voir conf Ovh) ou sur ex pi4
 # irrigation ajouter des traceurs ?

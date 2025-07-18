@@ -119,7 +119,8 @@ def trace_automation_daily_report():
 
     report_lines = ["Rapport d'automatisations du " + today.strftime("%d/%m/%Y") + ":\n"]
     for automation_name, status, executed_at in rows:
-        line = f"- {executed_at} : {automation_name} ({status})"
+        heure = executed_at.strftime("%H:%M")  # extrait uniquement l'heure
+        line = f"- {heure} : {automation_name} ({status})"
         report_lines.append(line)
         
     return "\n".join(report_lines)

@@ -495,10 +495,10 @@ def init_dates(data: dict):
     try:
         start = datetime.strptime(data["start"], "%Y-%m-%d").date()
         end = datetime.strptime(data["end"], "%Y-%m-%d").date()
-        loue = bool(data.get("loue", False))
+        resa = bool(data.get("loue", False))
         weekend = bool(data.get("weekend", False))  
 
-        logger.info(f"Airbnb init dates {loue} entre {start} et {end} (weekend {weekend})")
+        logger.info(f"Airbnb init dates {resa} entre {start} et {end} (weekend {weekend})")
 
         if end < start:
             logger.warning("⛔ Date de fin antérieure à la date de début")
@@ -511,7 +511,7 @@ def init_dates(data: dict):
         count = 0
         while current <= end:
             is_weekend = current.weekday() >= 5  # 5 = Saturday, 6 = Sunday
-            statut = weekend if is_weekend else loue
+            statut = weekend if is_weekend else resa
             cursor.execute(
                 """
                 INSERT INTO airbnb_loue (jour, loue)
@@ -524,7 +524,7 @@ def init_dates(data: dict):
             count += 1
 
         conn.commit()
-        logger.info(f"✅ {count} jours {loue} entre {start} et {end} (weekend {weekend})")
+        logger.info(f"✅ {count} jours {resa} entre {start} et {end} (weekend {weekend})")
         return {"status": "ok", "message": f"{count} jours traités"}
     except Exception as e:
         logger.error(f"❌ Erreur dans /loue/init : {e}")

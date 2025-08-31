@@ -495,8 +495,8 @@ def init_dates(payload: dict):
     try:
         start = datetime.strptime(payload["start"], "%Y-%m-%d").date()
         end = datetime.strptime(payload["end"], "%Y-%m-%d").date()
-        resa = payload.get("resa", False)
-        # resa = bool(payload.get("resa", False))  
+        # resa = payload.get("resa", False)
+        resa = bool(payload.get("resa", False))  
         weekend = payload.get("weekend", False)
         # weekend = bool(payload.get("weekend", False))  
 

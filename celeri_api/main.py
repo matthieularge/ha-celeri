@@ -491,7 +491,7 @@ def upsert_loue_date(cursor, jour: date, loue: bool):
 
 @app.post("/loue/init")
 def init_dates(data: dict):
-    logger.debug(f"📅 POST /loue/init : {data}")
+    logger.info(f"📅 POST /loue/init : {data}")
     try:
         start = datetime.strptime(data["start"], "%Y-%m-%d").date()
         end = datetime.strptime(data["end"], "%Y-%m-%d").date()

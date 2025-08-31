@@ -495,7 +495,7 @@ def init_dates(data: dict):
     try:
         start = datetime.strptime(data["start"], "%Y-%m-%d").date()
         end = datetime.strptime(data["end"], "%Y-%m-%d").date()
-        loue = bool(data.get("loue", True))
+        loue = bool(data.get("loue", False))
         weekend = bool(data.get("weekend", False))  
 
         logger.info(f"Airbnb init dates {loue} entre {start} et {end} (weekend {weekend})")

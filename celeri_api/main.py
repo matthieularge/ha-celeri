@@ -495,9 +495,9 @@ def init_dates(payload: dict):
     try:
         start = datetime.strptime(payload["start"], "%Y-%m-%d").date()
         end = datetime.strptime(payload["end"], "%Y-%m-%d").date()
-        bool resa = payload.get("resa", False)
+        resa = payload.get("resa", False)
         # resa = bool(payload.get("resa", False))  
-        bool weekend = payload.get("weekend", False)
+        weekend = payload.get("weekend", False)
         # weekend = bool(payload.get("weekend", False))  
 
         logger.info(f"Airbnb init dates {resa} entre {start} et {end} (weekend {weekend})")
@@ -513,7 +513,7 @@ def init_dates(payload: dict):
         count = 0
         while current <= end:
             is_weekend = current.weekday() >= 5  # 5 = Saturday, 6 = Sunday
-            bool statut = weekend if is_weekend else resa
+            statut = weekend if is_weekend else resa
             cursor.execute(
                 """
                 INSERT INTO airbnb_loue (jour, loue)

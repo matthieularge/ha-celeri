@@ -490,15 +490,15 @@ def upsert_loue_date(cursor, jour: date, loue: bool):
 
 
 @app.post("/loue/init")
-def init_dates(data: dict):
-    logger.info(f"📅 POST /loue/init : {data}")
+def init_dates(payload: dict):
+    logger.info(f"📅 POST /loue/init : {payload}")
     try:
-        start = datetime.strptime(data["start"], "%Y-%m-%d").date()
-        end = datetime.strptime(data["end"], "%Y-%m-%d").date()
-        resa = data.get("resa", False)
-        # resa = bool(data.get("resa", False))  
-        weekend = data.get("weekend", False)
-        # weekend = bool(data.get("weekend", False))  
+        start = datetime.strptime(payload["start"], "%Y-%m-%d").date()
+        end = datetime.strptime(payload["end"], "%Y-%m-%d").date()
+        bool resa = payload.get("resa", False)
+        # resa = bool(payload.get("resa", False))  
+        bool weekend = payload.get("weekend", False)
+        # weekend = bool(payload.get("weekend", False))  
 
         logger.info(f"Airbnb init dates {resa} entre {start} et {end} (weekend {weekend})")
 
@@ -513,7 +513,7 @@ def init_dates(data: dict):
         count = 0
         while current <= end:
             is_weekend = current.weekday() >= 5  # 5 = Saturday, 6 = Sunday
-            statut = weekend if is_weekend else resa
+            bool statut = weekend if is_weekend else resa
             cursor.execute(
                 """
                 INSERT INTO airbnb_loue (jour, loue)

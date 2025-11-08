@@ -11,15 +11,11 @@ from enum import Enum
 from typing import Optional
 
 # TODO
-# irrigation ajouter des traceurs ?
+# irrigation ajouter des traceurs 
 # stats sur les datas capteurs et rapport : api qui renvoie les resultats de selects à afficher dans une zone HA ?
 # repo GitHub en privé
 
-# icloud docker 
-# dnla sur ex pi4 : liens symboliques vers icloud docker
-# samba bakcup vers ex pi4
-
-# actual budget en add on pour supprimer le pi4 ?
+# samba bakcup vers usbDrive
 
 
 logging.basicConfig(

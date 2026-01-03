@@ -20,8 +20,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-app.include_router(stats_router)
-
 AIRBNB_CAL_URL = "https://www.airbnb.fr/calendar/ical/32053854.ics?s=bee9bbc3a51315a4fa27ea2a09621aef"
 AIRBNB_CAL_URL2 = "https://www.airbnb.fr/calendar/ical/32057490.ics?s=0f91f1dc1e6c7f6ba3ddf82e0ca59c92"
 
@@ -30,6 +28,8 @@ app = FastAPI()
 
 from fastapi.requests import Request
 from fastapi.responses import PlainTextResponse
+
+app.include_router(stats_router)
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):

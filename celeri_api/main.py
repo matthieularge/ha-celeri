@@ -11,11 +11,7 @@ from enum import Enum
 from typing import Optional
 
 # TODO
-# irrigation ajouter des traceurs 
-# stats sur les datas capteurs et rapport : api qui renvoie les resultats de selects à afficher dans une zone HA ?
 # repo GitHub en privé
-
-# samba bakcup vers usbDrive
 
 
 logging.basicConfig(
@@ -669,3 +665,8 @@ def upsert_rapport(entry: RapportEntry):
     finally:
         cursor.close()
         conn.close()
+
+
+from stats import router as stats_router
+app.include_router(stats_router)
+

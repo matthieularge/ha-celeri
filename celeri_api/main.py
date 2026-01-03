@@ -18,6 +18,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+from stats import router as stats_router
+app.include_router(stats_router)
 
 AIRBNB_CAL_URL = "https://www.airbnb.fr/calendar/ical/32053854.ics?s=bee9bbc3a51315a4fa27ea2a09621aef"
 AIRBNB_CAL_URL2 = "https://www.airbnb.fr/calendar/ical/32057490.ics?s=0f91f1dc1e6c7f6ba3ddf82e0ca59c92"
@@ -648,8 +650,3 @@ def upsert_rapport(entry: RapportEntry):
     finally:
         cursor.close()
         conn.close()
-
-
-from stats import router as stats_router
-app.include_router(stats_router)
-

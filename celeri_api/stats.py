@@ -3,6 +3,10 @@ import time
 from fastapi import APIRouter
 from db import get_connection
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/stats", tags=["stats"])

@@ -1,10 +1,8 @@
 import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-import mysql.connector
 from datetime import date, datetime, timedelta
 from fastapi.responses import JSONResponse
-import json
 from ics import Calendar
 import requests
 from enum import Enum
@@ -20,18 +18,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def load_config():
-    with open("/data/options.json") as f:
-        return json.load(f)
-
-config = load_config()
-
-DB_CONFIG = {
-    "host": config["DB_HOST"],
-    "user": config["DB_USER"],
-    "password": config["DB_PASSWORD"],
-    "database": config["DB_NAME"]
-}
 
 AIRBNB_CAL_URL = "https://www.airbnb.fr/calendar/ical/32053854.ics?s=bee9bbc3a51315a4fa27ea2a09621aef"
 AIRBNB_CAL_URL2 = "https://www.airbnb.fr/calendar/ical/32057490.ics?s=0f91f1dc1e6c7f6ba3ddf82e0ca59c92"
@@ -63,9 +49,6 @@ def read_root():
     logger.debug("GET / called")
     return {"message": "Hello from Celeri addon"}
 
-def get_connection():
-    logger.debug("Creating new database connection")
-    return mysql.connector.connect(**DB_CONFIG)    
 
 
 

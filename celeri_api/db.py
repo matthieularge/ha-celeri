@@ -1,11 +1,25 @@
-import os
+import json
+import logging
 import mysql.connector
 
+logger = logging.getLogger(__name__)
+
+
+def load_config():
+    with open("/data/options.json") as f:
+        return json.load(f)
+
+
+config = load_config()
+
+DB_CONFIG = {
+    "host": config["DB_HOST"],
+    "user": config["DB_USER"],
+    "password": config["DB_PASSWORD"],
+    "database": config["DB_NAME"],
+}
+
+
 def get_connection():
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME"),
-        port=int(os.getenv("DB_PORT", 3306))
-    )
+    logger.debug("Creating new database connection")
+    return mysql.connector.connect(**DB_CONFIG)

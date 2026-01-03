@@ -7,6 +7,7 @@ from ics import Calendar
 import requests
 from enum import Enum
 from typing import Optional
+from stats import router as stats_router
 
 # TODO
 # repo GitHub en privé
@@ -18,7 +19,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from stats import router as stats_router
+
 app.include_router(stats_router)
 
 AIRBNB_CAL_URL = "https://www.airbnb.fr/calendar/ical/32053854.ics?s=bee9bbc3a51315a4fa27ea2a09621aef"

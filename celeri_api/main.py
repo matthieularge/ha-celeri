@@ -7,7 +7,9 @@ from ics import Calendar
 import requests
 from enum import Enum
 from typing import Optional
-from stats import router as stats_router
+
+from celeri_api.stats import router as stats_router
+
 
 # TODO
 # repo GitHub en privé

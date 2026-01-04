@@ -682,7 +682,7 @@ def upsert_rapport(entry: RapportEntry):
 # ======================================================
 
 CACHE = {}
-CACHE_TTL = 600  # 10 minutes
+CACHE_TTL = 7200  # 2h
 
 def cached(key: str, compute_func):
     now = time.time()

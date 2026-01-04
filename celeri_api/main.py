@@ -715,7 +715,7 @@ def airbnb_par_annee():
         """)
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached("airbnb_annee", compute)
 
@@ -737,7 +737,7 @@ def airbnb_par_mois_et_annee():
         """)
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached("airbnb_mois", compute)
 
@@ -760,7 +760,7 @@ def presence_par_annee():
         """)
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached("presence_annee", compute)
 
@@ -782,7 +782,7 @@ def presence_par_mois_et_annee():
         """)
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached("presence_mois", compute)
 
@@ -805,7 +805,7 @@ def teletravail_par_annee():
         """)
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached("teletravail_annee", compute)
 
@@ -827,7 +827,7 @@ def teletravail_par_mois_et_annee():
         """)
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached("teletravail_mois", compute)
 
@@ -850,7 +850,7 @@ def cheminee_par_annee():
         """)
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached("cheminee_annee", compute)
 
@@ -872,7 +872,7 @@ def cheminee_par_mois_et_annee():
         """)
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached("cheminee_mois", compute)
 
@@ -894,7 +894,7 @@ def rapports_par_annee():
         """)
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached("rapports_annee", compute)
 
@@ -915,7 +915,7 @@ def rapports_par_mois_et_annee():
         """)
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached("rapports_mois", compute)
 
@@ -941,7 +941,7 @@ def rapports_pratiques_par_annee():
         """)
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached("rapports_pratiques_annee", compute)
 
@@ -972,6 +972,6 @@ def capteurs_moyenne_mois(capteur: str):
         """, (capteur,))
         rows = cur.fetchall()
         conn.close()
-        return rows
+        return {"data": rows}
 
     return cached(cache_key, compute)

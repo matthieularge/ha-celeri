@@ -2,7 +2,7 @@ import logging
 import time
 from fastapi import APIRouter
 
-from .db import get_connection
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 

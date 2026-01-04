@@ -7,8 +7,9 @@ from ics import Calendar
 import requests
 from enum import Enum
 from typing import Optional
-
-from stats import router as stats_router
+import json
+import logging
+import mysql.connector
 
 
 
@@ -23,6 +24,25 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def load_config():
+    with open("/data/options.json") as f:
+        return json.load(f)
+
+config = load_config()
+
+DB_CONFIG = {
+    "host": config["DB_HOST"],
+    "user": config["DB_USER"],
+    "password": config["DB_PASSWORD"],
+    "database": config["DB_NAME"],
+}
+
+
+def get_connection():
+    logger.debug("Creating new database connection")
+    return mysql.connector.connect(**DB_CONFIG)
+
+
 AIRBNB_CAL_URL = "https://www.airbnb.fr/calendar/ical/32053854.ics?s=bee9bbc3a51315a4fa27ea2a09621aef"
 AIRBNB_CAL_URL2 = "https://www.airbnb.fr/calendar/ical/32057490.ics?s=0f91f1dc1e6c7f6ba3ddf82e0ca59c92"
 
@@ -32,7 +52,6 @@ app = FastAPI()
 from fastapi.requests import Request
 from fastapi.responses import PlainTextResponse
 
-app.include_router(stats_router)
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):

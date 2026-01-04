@@ -8,13 +8,7 @@ import requests
 from enum import Enum
 from typing import Optional
 
-
-import os, sys
-
-current_dir = os.path.dirname(__file__)
-sys.path.append(current_dir)
-
-from stats import router as stats_router
+from .stats import router as stats_router
 
 
 

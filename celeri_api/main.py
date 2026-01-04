@@ -8,7 +8,7 @@ import requests
 from enum import Enum
 from typing import Optional
 
-from .stats import router as stats_router
+from stats import router as stats_router
 
 
 

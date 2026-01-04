@@ -8,7 +8,14 @@ import requests
 from enum import Enum
 from typing import Optional
 
-from celeri_api.stats import router as stats_router
+
+import os, sys
+
+current_dir = os.path.dirname(__file__)
+sys.path.append(current_dir)
+
+from stats import router as stats_router
+
 
 
 # TODO

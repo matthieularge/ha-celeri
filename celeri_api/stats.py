@@ -1,6 +1,12 @@
 import logging
 import time
 from fastapi import APIRouter
+
+import os, sys
+
+current_dir = os.path.dirname(__file__)
+sys.path.append(current_dir)
+
 from db import get_connection
 
 logger = logging.getLogger(__name__)

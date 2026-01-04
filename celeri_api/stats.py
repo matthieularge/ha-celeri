@@ -1,19 +1,12 @@
 import logging
 import time
-from fastapi import APIRouter
-
-from db import get_connection
-
-logger = logging.getLogger(__name__)
-
-router = APIRouter(prefix="/stats", tags=["stats"])
 
 # ======================================================
 # CACHE MÉMOIRE (Home Assistant friendly)
 # ======================================================
 
 CACHE = {}
-CACHE_TTL = 300  # 5 minutes
+CACHE_TTL = 600  # 10 minutes
 
 def cached(key: str, compute_func):
     now = time.time()
@@ -32,7 +25,7 @@ def cached(key: str, compute_func):
 # AIRBNB
 # ======================================================
 
-@router.get("/airbnb/annee")
+@router.get("/stats/airbnb/annee")
 def airbnb_par_annee():
     def compute():
         conn = get_connection()
@@ -51,7 +44,7 @@ def airbnb_par_annee():
     return cached("airbnb_annee", compute)
 
 
-@router.get("/airbnb/mois")
+@router.get("/stats/airbnb/mois")
 def airbnb_par_mois_et_annee():
     def compute():
         conn = get_connection()
@@ -77,7 +70,7 @@ def airbnb_par_mois_et_annee():
 # PRÉSENCE
 # ======================================================
 
-@router.get("/presence/annee")
+@router.get("/stats/presence/annee")
 def presence_par_annee():
     def compute():
         conn = get_connection()
@@ -96,7 +89,7 @@ def presence_par_annee():
     return cached("presence_annee", compute)
 
 
-@router.get("/presence/mois")
+@router.get("/stats/presence/mois")
 def presence_par_mois_et_annee():
     def compute():
         conn = get_connection()
@@ -122,7 +115,7 @@ def presence_par_mois_et_annee():
 # TÉLÉTRAVAIL
 # ======================================================
 
-@router.get("/teletravail/annee")
+@router.get("/stats/teletravail/annee")
 def teletravail_par_annee():
     def compute():
         conn = get_connection()
@@ -141,7 +134,7 @@ def teletravail_par_annee():
     return cached("teletravail_annee", compute)
 
 
-@router.get("/teletravail/mois")
+@router.get("/stats/teletravail/mois")
 def teletravail_par_mois_et_annee():
     def compute():
         conn = get_connection()
@@ -167,7 +160,7 @@ def teletravail_par_mois_et_annee():
 # CHEMINÉE
 # ======================================================
 
-@router.get("/cheminee/annee")
+@router.get("/stats/cheminee/annee")
 def cheminee_par_annee():
     def compute():
         conn = get_connection()
@@ -186,7 +179,7 @@ def cheminee_par_annee():
     return cached("cheminee_annee", compute)
 
 
-@router.get("/cheminee/mois")
+@router.get("/stats/cheminee/mois")
 def cheminee_par_mois_et_annee():
     def compute():
         conn = get_connection()
@@ -212,7 +205,7 @@ def cheminee_par_mois_et_annee():
 # RAPPORTS
 # ======================================================
 
-@router.get("/rapports/annee")
+@router.get("/stats/rapports/annee")
 def rapports_par_annee():
     def compute():
         conn = get_connection()
@@ -230,7 +223,7 @@ def rapports_par_annee():
     return cached("rapports_annee", compute)
 
 
-@router.get("/rapports/mois")
+@router.get("/stats/rapports/mois")
 def rapports_par_mois_et_annee():
     def compute():
         conn = get_connection()
@@ -251,7 +244,7 @@ def rapports_par_mois_et_annee():
     return cached("rapports_mois", compute)
 
 
-@router.get("/rapports/pratiques/annee")
+@router.get("/stats/rapports/pratiques/annee")
 def rapports_pratiques_par_annee():
     def compute():
         conn = get_connection()
@@ -281,7 +274,7 @@ def rapports_pratiques_par_annee():
 # CAPTEURS (MOYENNE PAR MOIS / ANNÉE)
 # ======================================================
 
-@router.get("/capteurs/mois")
+@router.get("/stats/capteurs/mois")
 def capteurs_moyenne_mois(capteur: str):
     cache_key = f"capteurs_{capteur}_mois"
 

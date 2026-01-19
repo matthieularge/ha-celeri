@@ -934,7 +934,19 @@ def rapports_pratiques_par_annee():
                 SUM(missionnaire) AS missionnaire,
                 SUM(andromaque) AS andromaque,
                 SUM(sodomie) AS sodomie,
-                SUM(fouet) AS fouet
+                SUM(fouet) AS fouet,
+                sum(ejac = 'corps') as ejac_corps,
+                sum(ejac = 'vagin') as ejac_vagin,
+                sum(ejac = 'bouche') as ejac_bouche,
+                sum(ejac = 'faciale') as ejac_faciale,
+                sum(ejac = 'anale') as ejac_anale,
+                sum(ejac = 'aucune') as ejac_aucune,
+                sum(lingerie = 'nue') as lingerie_nue,
+                sum(lingerie = 'string') as lingerie_string,
+                sum(lingerie = 'pj') as lingerie_pj,
+                sum(lieu = 'chambre') as lingerie_chambre,
+                sum(lieu = 'salon') as lingerie_salon,
+                sum(lieu = 'autre') as lingerie_autre
             FROM rapport
             GROUP BY YEAR(jour)
             ORDER BY annee

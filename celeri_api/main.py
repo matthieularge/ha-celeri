@@ -944,9 +944,9 @@ def rapports_pratiques_par_annee():
                 sum(lingerie = 'nue') as lingerie_nue,
                 sum(lingerie = 'string') as lingerie_string,
                 sum(lingerie = 'pj') as lingerie_pj,
-                sum(lieu = 'chambre') as lingerie_chambre,
-                sum(lieu = 'salon') as lingerie_salon,
-                sum(lieu = 'autre') as lingerie_autre
+                sum(lieu = 'chambre') as lieu_chambre,
+                sum(lieu = 'salon') as lieu_salon,
+                sum(lieu = 'autre') as lieu_autre
             FROM rapport
             GROUP BY YEAR(jour)
             ORDER BY annee

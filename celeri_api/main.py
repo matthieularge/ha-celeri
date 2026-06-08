@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from datetime import date, datetime, timedelta
 from fastapi.responses import JSONResponse
-from ics import Calendar
+from icalendar import Calendar
 import requests
 from enum import Enum
 from typing import Optional
@@ -479,29 +479,41 @@ def loue_sync_calendar():
 
 def is_reserved(cal_url: str, check_date: date) -> bool:
     try:
+        logger.debug(f"📅 Analyse du calendrier pour la date : {check_date}")
+        
         response = requests.get(cal_url, timeout=7)
         response.raise_for_status()
-        calendar = Calendar(response.text)
-
-        # On filtre uniquement les événements "Reserved" proches de la date recherchée
-        for event in calendar.timeline:  # ⚠️ `timeline` trie les événements par date
-            
-            if event.name != "Reserved":
-                continue
-
-            logger.info(f"{event.begin.date().isoformat()} {event.name}")
-
-            # Si l'événement commence après la date recherchée, on peut s'arrêter
-            if event.begin.date() > check_date:
-                break
-
-            if event.begin.date() <= check_date < event.end.date():
-                return True
-
+        
+        cal = Calendar.from_ical(response.text)
+        
+        for component in cal.walk():
+            if component.name == "VEVENT":
+                # Extraction et normalisation des dates de début et de fin
+                dtstart = component.get('dtstart').dt
+                dtend = component.get('dtend').dt
+                
+                if isinstance(dtstart, datetime):
+                    dtstart = dtstart.date()
+                if isinstance(dtend, datetime):
+                    dtend = dtend.date()
+                
+                # Une date est réservée si : dtstart <= check_date < dtend
+                # (Le jour du départ 'dtend' est libéré à 11h, donc non loué pour la nuit qui suit)
+                if dtstart <= check_date < dtend:
+                    summary = component.get('summary', 'Réservé')
+                    logger.debug(f"🔒 Réservation trouvée : {check_date} est dans l'événement '{summary}' ({dtstart} -> {dtend})")
+                    return True
+                    
+        logger.debug(f"🔓 Aucune réservation pour {check_date}. Statut : Libre.")
+        return False
+        
+    except requests.exceptions.Timeout:
+        logger.error(f"⏱️ Timeout de 7s dépassé lors de l'appel au calendrier Airbnb.")
         return False
     except Exception as e:
-        logger.error(f"Erreur lors de la lecture du calendrier Airbnb : {e}")
+        logger.error(f"❌ Erreur lors de la lecture du calendrier Airbnb : {e}")
         return False
+
 
 def upsert_loue_date(cursor, jour: date, loue: bool):
     logger.info(f"Mis à jour : {jour.isoformat()} loué={loue}")
@@ -514,7 +526,6 @@ def upsert_loue_date(cursor, jour: date, loue: bool):
         """,
         (jour.isoformat(), loue)
     )
-
 
 
 def to_bool(value):

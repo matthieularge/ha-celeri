@@ -11,7 +11,7 @@ import json
 import logging
 import mysql.connector
 import time
-
+from threading import Lock
 
 # TODO
 # repo GitHub en privé
@@ -126,30 +126,104 @@ def trace_automation_daily_report():
     return "\n".join(report_lines)
 
 
+def execute_get_presence(cursor, conn, jour: str) -> bool:
+    cursor.execute("SELECT presence FROM presence WHERE jour = %s", (jour,))
+    row = cursor.fetchone()
+    if row:
+        logger.debug(f"✔️ Date trouvée: {jour} => presence={bool(row[0])}")
+        return bool(row[0])
+    else:
+        logger.info(f"❗ Date {jour} absente — ajout avec presence=False")
+        cursor.execute("INSERT INTO presence (jour, presence) VALUES (%s, %s)", (jour, False))
+        conn.commit()
+        return False
+
+def execute_get_teletravail(cursor, conn, jour: str) -> bool:
+    cursor.execute("SELECT teletravail FROM teletravail WHERE jour = %s", (jour,))
+    row = cursor.fetchone()
+    if row:
+        logger.debug(f"✔️ Date trouvée: {jour} => teletravail={bool(row[0])}")
+        return bool(row[0])
+    else:
+        logger.info(f"❗ Date {jour} absente — ajout avec teletravail=False")
+        cursor.execute("INSERT INTO teletravail (jour, teletravail) VALUES (%s, %s)", (jour, False))
+        conn.commit()
+        return False
+
+def execute_get_cheminee(cursor, conn, jour: str) -> bool:
+    cursor.execute("SELECT cheminee FROM cheminee WHERE jour = %s", (jour,))
+    row = cursor.fetchone()
+    if row:
+        logger.debug(f"✔️ Date trouvée: {jour} => cheminee={bool(row[0])}")
+        return bool(row[0])
+    else:
+        logger.info(f"❗ Date {jour} absente — ajout avec cheminee=False")
+        cursor.execute("INSERT INTO cheminee (jour, cheminee) VALUES (%s, %s)", (jour, False))
+        conn.commit()
+        return False
+
+def execute_get_loue(cursor, conn, jour: str) -> bool:
+    cursor.execute("SELECT loue FROM airbnb_loue WHERE jour = %s", (jour,))
+    row = cursor.fetchone()
+    if row:
+        logger.debug(f"✔️ Date trouvée: {jour} => loue={bool(row[0])}")
+        return bool(row[0])
+    else:
+        logger.info(f"❗ Date {jour} absente — ajout avec loue=False")
+        cursor.execute("INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)", (jour, False))
+        conn.commit()
+        return False
+
+
+@app.get("/api/status_du_jour")
+def get_status_du_jour():
+    logger.info("📊 GET /api/status_du_jour (appel unifié)")
+    
+    today = date.today()
+    jour_str = today.isoformat()
+    hier_str = (today - timedelta(days=1)).isoformat()
+    demain_str = (today + timedelta(days=1)).isoformat()
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # On enchaîne les fonctions sur la même connexion
+        presence = execute_get_presence(cursor, conn, jour_str)
+        teletravail = execute_get_teletravail(cursor, conn, jour_str)
+        cheminee = execute_get_cheminee(cursor, conn, jour_str)
+        airbnb_hier = execute_get_loue(cursor, conn, hier_str)
+        airbnb_aujourdhui = execute_get_loue(cursor, conn, jour_str)
+        airbnb_demain = execute_get_loue(cursor, conn, demain_str)
+
+        return {
+            "jour": jour_str,
+            "presence": presence,
+            "teletravail": teletravail,
+            "cheminee": cheminee,
+            "airbnb_hier": airbnb_hier,
+            "airbnb_aujourdhui": airbnb_aujourdhui,
+            "airbnb_demain": airbnb_demain
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Erreur /api/status_du_jour : {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
 @app.get("/presence/{jour}")
 def get_presence(jour: str):
     logger.debug(f"🔎 GET /presence/{jour}")
     conn = get_connection()
     cursor = conn.cursor()
-
     try:
-        cursor.execute("SELECT presence FROM presence WHERE jour = %s", (jour,))
-        row = cursor.fetchone()
-
-        if row:
-            presence = bool(row[0])
-            logger.debug(f"✔️ Date trouvée: {jour} => presence={presence}")
-        else:
-            logger.info(f"❗ Date {jour} absente — ajout avec presence=False")
-            cursor.execute(
-                "INSERT INTO presence (jour, presence) VALUES (%s, %s)",
-                (jour, False)
-            )
-            conn.commit()
-            presence = False
-
+        presence = execute_get_presence(cursor, conn, jour)
         return {"jour": jour, "presence": presence}
-
     except Exception as e:
         logger.error(f"❌ Erreur GET /presence/{jour}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -196,25 +270,9 @@ def get_teletravail(jour: str):
     logger.debug(f"🔎 GET /teletravail/{jour}")
     conn = get_connection()
     cursor = conn.cursor()
-
     try:
-        cursor.execute("SELECT teletravail FROM teletravail WHERE jour = %s", (jour,))
-        row = cursor.fetchone()
-
-        if row:
-            teletravail = bool(row[0])
-            logger.debug(f"✔️ Date trouvée: {jour} => teletravail={teletravail}")
-        else:
-            logger.info(f"❗ Date {jour} absente — ajout avec teletravail=False")
-            cursor.execute(
-                "INSERT INTO teletravail (jour, teletravail) VALUES (%s, %s)",
-                (jour, False)
-            )
-            conn.commit()
-            teletravail = False
-
+        teletravail = execute_get_teletravail(cursor, conn, jour)
         return {"jour": jour, "teletravail": teletravail}
-
     except Exception as e:
         logger.error(f"❌ Erreur GET /teletravail/{jour}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -261,25 +319,9 @@ def get_cheminee(jour: str):
     logger.debug(f"🔎 GET /cheminee/{jour}")
     conn = get_connection()
     cursor = conn.cursor()
-
     try:
-        cursor.execute("SELECT cheminee FROM cheminee WHERE jour = %s", (jour,))
-        row = cursor.fetchone()
-
-        if row:
-            cheminee = bool(row[0])
-            logger.debug(f"✔️ Date trouvée: {jour} => cheminee={cheminee}")
-        else:
-            logger.info(f"❗ Date {jour} absente — ajout avec cheminee=False")
-            cursor.execute(
-                "INSERT INTO cheminee (jour, cheminee) VALUES (%s, %s)",
-                (jour, False)
-            )
-            conn.commit()
-            cheminee = False
-
+        cheminee = execute_get_cheminee(cursor, conn, jour)
         return {"jour": jour, "cheminee": cheminee}
-
     except Exception as e:
         logger.error(f"❌ Erreur GET /cheminee/{jour}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -331,25 +373,9 @@ def get_loue(jour: str):
     logger.debug(f"🔎 GET /loue/{jour}")
     conn = get_connection()
     cursor = conn.cursor()
-
     try:
-        cursor.execute("SELECT loue FROM airbnb_loue WHERE jour = %s", (jour,))
-        row = cursor.fetchone()
-
-        if row:
-            loue = bool(row[0])
-            logger.debug(f"✔️ Date trouvée: {jour} => loue={loue}")
-        else:
-            logger.info(f"❗ Date {jour} absente — ajout avec loue=False")
-            cursor.execute(
-                "INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)",
-                (jour, False)
-            )
-            conn.commit()
-            loue = False
-
+        loue = execute_get_loue(cursor, conn, jour)
         return {"jour": jour, "loue": loue}
-
     except Exception as e:
         logger.error(f"❌ Erreur GET /loue/{jour}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -418,39 +444,41 @@ def update_loue(jour: str, payload: dict):
 
 @app.post("/loue_sync_calendar")
 def loue_sync_calendar():
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
+    # Le verrou empêche deux exécutions simultanées du parsing iCal
+    with calendar_lock:
+        try:
+            conn = get_connection()
+            cur = conn.cursor()
 
-        today = date.today()
-        tomorrow = today + timedelta(days=1)
+            today = date.today()
+            tomorrow = today + timedelta(days=1)
 
-        # calendrier studio
-        for check_date in [today, tomorrow]:
-            reserved = is_reserved(AIRBNB_CAL_URL2, check_date)
-            if reserved:
-                upsert_loue_date(cur, check_date, reserved)
-        
-        # calendrier maison
-        for check_date in [today, tomorrow]:
-            reserved = is_reserved(AIRBNB_CAL_URL, check_date)
-            if reserved:
-                upsert_loue_date(cur, check_date, reserved)
+            # Calendrier studio (AIRBNB_CAL_URL2)
+            for check_date in [today, tomorrow]:
+                reserved = is_reserved(AIRBNB_CAL_URL2, check_date)
+                if reserved:
+                    upsert_loue_date(cur, check_date, reserved)
+            
+            # Calendrier maison (AIRBNB_CAL_URL)
+            for check_date in [today, tomorrow]:
+                reserved = is_reserved(AIRBNB_CAL_URL, check_date)
+                if reserved:
+                    upsert_loue_date(cur, check_date, reserved)
 
-        conn.commit()
-        return {"status": "success", "message": "Synchronisation terminée."}
+            conn.commit()
+            return {"status": "success", "message": "Synchronisation terminée."}
 
-    except Exception as e:
-        logger.error(f"❌ Erreur POST /loue_sync_calendar : {e}")
-        raise HTTPException(status_code=500, detail="Erreur base de données")
+        except Exception as e:
+            logger.error(f"❌ Erreur POST /loue_sync_calendar : {e}")
+            raise HTTPException(status_code=500, detail="Erreur base de données")
+        finally:
+            if conn:
+                conn.close()
 
-    finally:
-        if conn:
-            conn.close()
 
 def is_reserved(cal_url: str, check_date: date) -> bool:
     try:
-        response = requests.get(cal_url)
+        response = requests.get(cal_url, timeout=7)
         response.raise_for_status()
         calendar = Calendar(response.text)
 

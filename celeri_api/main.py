@@ -13,6 +13,7 @@ import mysql.connector
 import time
 from threading import Lock
 
+
 # TODO
 # repo GitHub en privé
 

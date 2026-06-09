@@ -444,36 +444,34 @@ def update_loue(jour: str, payload: dict):
 
 @app.post("/loue_sync_calendar")
 def loue_sync_calendar():
-    # Le verrou empêche deux exécutions simultanées du parsing iCal
-    with calendar_lock:
-        try:
-            conn = get_connection()
-            cur = conn.cursor()
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
 
-            today = date.today()
-            tomorrow = today + timedelta(days=1)
+        today = date.today()
+        tomorrow = today + timedelta(days=1)
 
-            # Calendrier studio (AIRBNB_CAL_URL2)
-            for check_date in [today, tomorrow]:
-                reserved = is_reserved(AIRBNB_CAL_URL2, check_date)
-                if reserved:
-                    upsert_loue_date(cur, check_date, reserved)
-            
-            # Calendrier maison (AIRBNB_CAL_URL)
-            for check_date in [today, tomorrow]:
-                reserved = is_reserved(AIRBNB_CAL_URL, check_date)
-                if reserved:
-                    upsert_loue_date(cur, check_date, reserved)
+        # Calendrier studio (AIRBNB_CAL_URL2)
+        for check_date in [today, tomorrow]:
+            reserved = is_reserved(AIRBNB_CAL_URL2, check_date)
+            if reserved:
+                upsert_loue_date(cur, check_date, reserved)
+        
+        # Calendrier maison (AIRBNB_CAL_URL)
+        for check_date in [today, tomorrow]:
+            reserved = is_reserved(AIRBNB_CAL_URL, check_date)
+            if reserved:
+                upsert_loue_date(cur, check_date, reserved)
 
-            conn.commit()
-            return {"status": "success", "message": "Synchronisation terminée."}
+        conn.commit()
+        return {"status": "success", "message": "Synchronisation terminée."}
 
-        except Exception as e:
-            logger.error(f"❌ Erreur POST /loue_sync_calendar : {e}")
-            raise HTTPException(status_code=500, detail="Erreur base de données")
-        finally:
-            if conn:
-                conn.close()
+    except Exception as e:
+        logger.error(f"❌ Erreur POST /loue_sync_calendar : {e}")
+        raise HTTPException(status_code=500, detail="Erreur base de données")
+    finally:
+        if conn:
+            conn.close()
 
 
 def is_reserved(cal_url: str, check_date: date) -> bool:

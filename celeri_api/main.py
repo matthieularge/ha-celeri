@@ -448,7 +448,11 @@ def loue_sync_calendar():
         conn = get_connection()
         cur = conn.cursor()
 
-        today = date.today()
+        # 1. On force explicitement le fuseau horaire de Paris
+        tz_paris = zoneinfo.ZoneInfo("Europe/Paris")
+        
+        # À 22h à Paris, "today" restera bien le jour même et ne basculera pas à minuit UTC
+        today = datetime.now(tz_paris).date()
         tomorrow = today + timedelta(days=1)
 
         # Calendrier studio (AIRBNB_CAL_URL2)

@@ -19,7 +19,7 @@ import zoneinfo
 # repo GitHub en privé
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger(__name__)
@@ -178,7 +178,7 @@ def execute_get_loue(cursor, conn, jour: str) -> bool:
 
 @app.get("/api/status_du_jour")
 def get_status_du_jour():
-    logger.info("📊 GET /api/status_du_jour (appel unifié)")
+    logger.debug("📊 GET /api/status_du_jour (appel unifié)")
     
     today = date.today()
     jour_str = today.isoformat()
@@ -196,6 +196,8 @@ def get_status_du_jour():
         airbnb_hier = execute_get_loue(cursor, conn, hier_str)
         airbnb_aujourdhui = execute_get_loue(cursor, conn, jour_str)
         airbnb_demain = execute_get_loue(cursor, conn, demain_str)
+
+        logger.info(f"📊 {jour_str} : Présence {presence} - Teletravail {teletravail} - Airbnb {airbnb_aujourdhui} - Airbnb demain {airbnb_demain}")
 
         return {
             "jour": jour_str,

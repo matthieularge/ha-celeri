@@ -520,7 +520,7 @@ def is_reserved(cal_url: str, check_date: date) -> bool:
 
 
 def upsert_loue_date(cursor, jour: date, loue: bool):
-    logger.info(f"Mis à jour : {jour.isoformat()} loué={loue}")
+    logger.info(f"📅 Airbnb {jour.isoformat()} loué={loue}")
     
     cursor.execute(
         """

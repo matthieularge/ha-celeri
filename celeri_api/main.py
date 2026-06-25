@@ -484,13 +484,19 @@ def get_relevant_events(cal_url: str, dates: list):
         
         events = []
         min_date, max_date = min(dates), max(dates)
+ 
+        dtheure = type(dtstart)
+        logger.info(f"🔍 Scan du calendrier : {cal_url} pour la période {min_date} ({dtheure}) à {max_date}")
 
         for component in cal.walk('VEVENT'):
+            summary = str(component.get('summary', ''))
             dtstart = component.get('dtstart').dt
             dtend = component.get('dtend').dt
             
             if isinstance(dtstart, datetime): dtstart = dtstart.date()
             if isinstance(dtend, datetime): dtend = dtend.date()
+
+            logger.info(f"🔍 Event trouvé: '{summary}' du {dtstart} au {dtend}")
 
             if dtstart <= max_date and dtend > min_date:
                 events.append({
@@ -498,6 +504,14 @@ def get_relevant_events(cal_url: str, dates: list):
                     'end': dtend,
                     'summary': str(component.get('summary', 'Réservé'))
                 })
+            if dtstart <= max_date and dtend > min_date:
+                logger.info(f"✅ Événement retenu : '{summary}' ({dtstart} -> {dtend})")
+                events.append({
+                    'start': dtstart,
+                    'end': dtend,
+                    'summary': summary
+                })
+                
         return events
     except Exception as e:
         logger.error(f"Erreur téléchargement {cal_url}: {e}")

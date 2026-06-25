@@ -116,11 +116,10 @@ def get_relevant_events(cal_url: str, dates: list):
         events = []
         min_date, max_date = min(dates), max(dates)
  
-        dtheure = type(dtstart)
-        logger.info(f"🔍 Scan du calendrier : {cal_url} pour la période {min_date} ({dtheure}) à {max_date}")
+        logger.info(f"🔍 Scan du calendrier : {cal_url} pour la période {min_date} à {max_date}")
 
         for component in cal.walk('VEVENT'):
-            summary = str(component.get('summary', ''))
+            
             start_val = component.get('dtstart')
             end_val = component.get('dtend')
 
@@ -134,6 +133,7 @@ def get_relevant_events(cal_url: str, dates: list):
             if isinstance(dtend, datetime): dtend = dtend.date()
 
             if dtstart <= max_date and dtend > min_date:
+                summary = str(component.get('summary', ''))
                 logger.info(f"✅ Événement trouvé : '{summary}' ({dtstart} -> {dtend})")
                 events.append({
                     'start': dtstart,

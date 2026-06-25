@@ -490,22 +490,20 @@ def get_relevant_events(cal_url: str, dates: list):
 
         for component in cal.walk('VEVENT'):
             summary = str(component.get('summary', ''))
-            dtstart = component.get('dtstart').dt
-            dtend = component.get('dtend').dt
+            start_val = component.get('dtstart')
+            end_val = component.get('dtend')
+
+            if not start_val or not end_val:
+                continue
+
+            dtstart = start_val.dt
+            dtend = end_val.dt
             
             if isinstance(dtstart, datetime): dtstart = dtstart.date()
             if isinstance(dtend, datetime): dtend = dtend.date()
 
-            logger.info(f"🔍 Event trouvé: '{summary}' du {dtstart} au {dtend}")
-
             if dtstart <= max_date and dtend > min_date:
-                events.append({
-                    'start': dtstart,
-                    'end': dtend,
-                    'summary': str(component.get('summary', 'Réservé'))
-                })
-            if dtstart <= max_date and dtend > min_date:
-                logger.info(f"✅ Événement retenu : '{summary}' ({dtstart} -> {dtend})")
+                logger.info(f"✅ Événement trouvé : '{summary}' ({dtstart} -> {dtend})")
                 events.append({
                     'start': dtstart,
                     'end': dtend,

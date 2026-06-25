@@ -505,14 +505,16 @@ def is_reserved(cal_url: str, check_date: date) -> bool:
                 if isinstance(dtend, datetime):
                     dtend = dtend.date()
 
-                logger.info(f"🔒 Réservation recherche : {dtstart} -> {dtend})")
+                logger.info(f"Réservation recherche : {dtstart} -> {dtend})")
                 
                 # Une date est réservée si : dtstart <= check_date < dtend
                 # (Le jour du départ 'dtend' est libéré à 11h, donc non loué pour la nuit qui suit)
                 if dtstart <= check_date < dtend:
                     summary = component.get('summary', 'Réservé')
-                    logger.info(f"🔒 Réservation trouvée : {check_date} est dans l'événement '{summary}' ({dtstart} -> {dtend})")
-                    return True
+                    logger.info(f"Event trouvée : {check_date} est dans l'événement '{summary}' ({dtstart} -> {dtend})")
+                    if summary == "Réservé":
+                        logger.info(f"Réservation trouvée : {check_date} est dans l'événement '{summary}' ({dtstart} -> {dtend})")
+                        return True
                     
         logger.info(f"🔓 Aucune réservation pour {check_date}. Statut : Libre.")
         return False

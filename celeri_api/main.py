@@ -460,13 +460,17 @@ def loue_sync_calendar():
 
         # Calendrier studio (AIRBNB_CAL_URL2)
         for check_date in [today, tomorrow]:
+            logger.info(f"Airbnb - Analyse AIRBNB_CAL_URL2 pour la date : {check_date}")
             reserved = is_reserved(AIRBNB_CAL_URL2, check_date)
+            logger.info(f"Airbnb - Analyse AIRBNB_CAL_URL2 pour la date : {check_date} - reserved {reserved}")
             if reserved:
                 upsert_loue_date(cur, check_date, reserved)
         
         # Calendrier maison (AIRBNB_CAL_URL)
         for check_date in [today, tomorrow]:
+            logger.info(f"Airbnb - Analyse AIRBNB_CAL_URL pour la date : {check_date}")
             reserved = is_reserved(AIRBNB_CAL_URL, check_date)
+            logger.info(f"Airbnb - Analyse AIRBNB_CAL_URL pour la date : {check_date} - reserved {reserved}")
             if reserved:
                 upsert_loue_date(cur, check_date, reserved)
 

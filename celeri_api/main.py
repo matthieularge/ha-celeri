@@ -451,28 +451,19 @@ def loue_sync_calendar():
         conn = get_connection()
         cur = conn.cursor()
 
-        # 1. On force explicitement le fuseau horaire de Paris
         tz_paris = zoneinfo.ZoneInfo("Europe/Paris")
-        
-        # À 22h à Paris, "today" restera bien le jour même et ne basculera pas à minuit UTC
         today = datetime.now(tz_paris).date()
         tomorrow = today + timedelta(days=1)
+        check_dates = [today, tomorrow]
 
-        # Calendrier studio (AIRBNB_CAL_URL2)
-        for check_date in [today, tomorrow]:
-            logger.info(f"Airbnb - Analyse AIRBNB_CAL_URL2 pour la date : {check_date}")
-            reserved = is_reserved(AIRBNB_CAL_URL2, check_date)
-            logger.info(f"Airbnb - Analyse AIRBNB_CAL_URL2 pour la date : {check_date} - reserved {reserved}")
-            if reserved:
-                upsert_loue_date(cur, check_date, reserved)
-        
-        # Calendrier maison (AIRBNB_CAL_URL)
-        for check_date in [today, tomorrow]:
-            logger.info(f"Airbnb - Analyse AIRBNB_CAL_URL pour la date : {check_date}")
-            reserved = is_reserved(AIRBNB_CAL_URL, check_date)
-            logger.info(f"Airbnb - Analyse AIRBNB_CAL_URL pour la date : {check_date} - reserved {reserved}")
-            if reserved:
-                upsert_loue_date(cur, check_date, reserved)
+        for url in [AIRBNB_CAL_URL, AIRBNB_CAL_URL2]:
+            events = get_relevant_events(url, check_dates)
+            for check_date in check_dates:
+                is_res = any(e['start'] <= check_date < e['end'] and e['summary'] == "Réservé" 
+                             for e in events)
+                logger.info(f"Airbnb {url} - {check_date} - reserved: {is_res}")
+                if is_res:
+                    upsert_loue_date(cur, check_date, is_res)
 
         conn.commit()
         return {"status": "success", "message": "Synchronisation terminée."}
@@ -485,46 +476,32 @@ def loue_sync_calendar():
             conn.close()
 
 
-def is_reserved(cal_url: str, check_date: date) -> bool:
+def get_relevant_events(cal_url: str, dates: list):
     try:
-        logger.debug(f"📅 Analyse du calendrier pour la date : {check_date}")
-        
         response = requests.get(cal_url, timeout=7)
         response.raise_for_status()
-        
         cal = Calendar.from_ical(response.text)
         
-        for component in cal.walk():
-            if component.name == "VEVENT":
-                # Extraction et normalisation des dates de début et de fin
-                dtstart = component.get('dtstart').dt
-                dtend = component.get('dtend').dt
-                
-                if isinstance(dtstart, datetime):
-                    dtstart = dtstart.date()
-                if isinstance(dtend, datetime):
-                    dtend = dtend.date()
+        events = []
+        min_date, max_date = min(dates), max(dates)
 
-                logger.info(f"Réservation recherche : {dtstart} -> {dtend})")
-                
-                # Une date est réservée si : dtstart <= check_date < dtend
-                # (Le jour du départ 'dtend' est libéré à 11h, donc non loué pour la nuit qui suit)
-                if dtstart <= check_date < dtend:
-                    summary = component.get('summary', 'Réservé')
-                    logger.info(f"Event trouvée : {check_date} est dans l'événement '{summary}' ({dtstart} -> {dtend})")
-                    if summary == "Réservé":
-                        logger.info(f"Réservation trouvée : {check_date} est dans l'événement '{summary}' ({dtstart} -> {dtend})")
-                        return True
-                    
-        logger.info(f"🔓 Aucune réservation pour {check_date}. Statut : Libre.")
-        return False
-        
-    except requests.exceptions.Timeout:
-        logger.error(f"⏱️ Timeout de 7s dépassé lors de l'appel au calendrier Airbnb.")
-        return False
+        for component in cal.walk('VEVENT'):
+            dtstart = component.get('dtstart').dt
+            dtend = component.get('dtend').dt
+            
+            if isinstance(dtstart, datetime): dtstart = dtstart.date()
+            if isinstance(dtend, datetime): dtend = dtend.date()
+
+            if dtstart <= max_date and dtend > min_date:
+                events.append({
+                    'start': dtstart,
+                    'end': dtend,
+                    'summary': str(component.get('summary', 'Réservé'))
+                })
+        return events
     except Exception as e:
-        logger.error(f"❌ Erreur lors de la lecture du calendrier Airbnb : {e}")
-        return False
+        logger.error(f"Erreur téléchargement {cal_url}: {e}")
+        return []
 
 
 def upsert_loue_date(cursor, jour: date, loue: bool):

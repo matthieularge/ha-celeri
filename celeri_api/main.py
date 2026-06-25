@@ -90,7 +90,7 @@ def loue_sync_calendar():
         for url in [AIRBNB_CAL_URL, AIRBNB_CAL_URL2]:
             events = get_relevant_events(url, check_dates)
             for check_date in check_dates:
-                is_res = any(e['start'] <= check_date < e['end'] and "Réservé" in e['summary'] 
+                is_res = any(e['start'] <= check_date < e['end'] and "Reserved" in e['summary'] 
                              for e in events)
                 logger.info(f"Airbnb {url} - {check_date} - reserved: {is_res}")
                 if is_res:

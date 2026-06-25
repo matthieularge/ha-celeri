@@ -76,6 +76,88 @@ def read_root():
     return {"message": "Hello from Celeri addon"}
 
 
+@app.post("/loue_sync_calendar")
+def loue_sync_calendar():
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        tz_paris = zoneinfo.ZoneInfo("Europe/Paris")
+        today = datetime.now(tz_paris).date()
+        tomorrow = today + timedelta(days=1)
+        check_dates = [today, tomorrow]
+
+        for url in [AIRBNB_CAL_URL, AIRBNB_CAL_URL2]:
+            events = get_relevant_events(url, check_dates)
+            for check_date in check_dates:
+                is_res = any(e['start'] <= check_date < e['end'] and "Réservé" in e['summary'] 
+                             for e in events)
+                logger.info(f"Airbnb {url} - {check_date} - reserved: {is_res}")
+                if is_res:
+                    upsert_loue_date(cur, check_date, is_res)
+
+        conn.commit()
+        return {"status": "success", "message": "Synchronisation terminée."}
+
+    except Exception as e:
+        logger.error(f"❌ Erreur POST /loue_sync_calendar : {e}")
+        raise HTTPException(status_code=500, detail="Erreur base de données")
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_relevant_events(cal_url: str, dates: list):
+    try:
+        response = requests.get(cal_url, timeout=7)
+        response.raise_for_status()
+        cal = Calendar.from_ical(response.text)
+        
+        events = []
+        min_date, max_date = min(dates), max(dates)
+ 
+        dtheure = type(dtstart)
+        logger.info(f"🔍 Scan du calendrier : {cal_url} pour la période {min_date} ({dtheure}) à {max_date}")
+
+        for component in cal.walk('VEVENT'):
+            summary = str(component.get('summary', ''))
+            start_val = component.get('dtstart')
+            end_val = component.get('dtend')
+
+            if not start_val or not end_val:
+                continue
+
+            dtstart = start_val.dt
+            dtend = end_val.dt
+            
+            if isinstance(dtstart, datetime): dtstart = dtstart.date()
+            if isinstance(dtend, datetime): dtend = dtend.date()
+
+            if dtstart <= max_date and dtend > min_date:
+                logger.info(f"✅ Événement trouvé : '{summary}' ({dtstart} -> {dtend})")
+                events.append({
+                    'start': dtstart,
+                    'end': dtend,
+                    'summary': summary
+                })
+                
+        return events
+    except Exception as e:
+        logger.error(f"Erreur téléchargement {cal_url}: {e}")
+        return []
+
+
+def upsert_loue_date(cursor, jour: date, loue: bool):
+    logger.info(f"📅 Airbnb {jour.isoformat()} loué={loue}")
+    
+    cursor.execute(
+        """
+        INSERT INTO airbnb_loue (jour, loue)
+        VALUES (%s, %s)
+        ON DUPLICATE KEY UPDATE loue = VALUES(loue)
+        """,
+        (jour.isoformat(), loue)
+    )
 
 
 class Trace(BaseModel):
@@ -443,90 +525,6 @@ def update_loue(jour: str, payload: dict):
     finally:
         cursor.close()
         conn.close()
-
-
-@app.post("/loue_sync_calendar")
-def loue_sync_calendar():
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
-
-        tz_paris = zoneinfo.ZoneInfo("Europe/Paris")
-        today = datetime.now(tz_paris).date()
-        tomorrow = today + timedelta(days=1)
-        check_dates = [today, tomorrow]
-
-        for url in [AIRBNB_CAL_URL, AIRBNB_CAL_URL2]:
-            events = get_relevant_events(url, check_dates)
-            for check_date in check_dates:
-                is_res = any(e['start'] <= check_date < e['end'] and "Réservé" in e['summary'] 
-                             for e in events)
-                logger.info(f"Airbnb {url} - {check_date} - reserved: {is_res}")
-                if is_res:
-                    upsert_loue_date(cur, check_date, is_res)
-
-        conn.commit()
-        return {"status": "success", "message": "Synchronisation terminée."}
-
-    except Exception as e:
-        logger.error(f"❌ Erreur POST /loue_sync_calendar : {e}")
-        raise HTTPException(status_code=500, detail="Erreur base de données")
-    finally:
-        if conn:
-            conn.close()
-
-
-def get_relevant_events(cal_url: str, dates: list):
-    try:
-        response = requests.get(cal_url, timeout=7)
-        response.raise_for_status()
-        cal = Calendar.from_ical(response.text)
-        
-        events = []
-        min_date, max_date = min(dates), max(dates)
- 
-        dtheure = type(dtstart)
-        logger.info(f"🔍 Scan du calendrier : {cal_url} pour la période {min_date} ({dtheure}) à {max_date}")
-
-        for component in cal.walk('VEVENT'):
-            summary = str(component.get('summary', ''))
-            start_val = component.get('dtstart')
-            end_val = component.get('dtend')
-
-            if not start_val or not end_val:
-                continue
-
-            dtstart = start_val.dt
-            dtend = end_val.dt
-            
-            if isinstance(dtstart, datetime): dtstart = dtstart.date()
-            if isinstance(dtend, datetime): dtend = dtend.date()
-
-            if dtstart <= max_date and dtend > min_date:
-                logger.info(f"✅ Événement trouvé : '{summary}' ({dtstart} -> {dtend})")
-                events.append({
-                    'start': dtstart,
-                    'end': dtend,
-                    'summary': summary
-                })
-                
-        return events
-    except Exception as e:
-        logger.error(f"Erreur téléchargement {cal_url}: {e}")
-        return []
-
-
-def upsert_loue_date(cursor, jour: date, loue: bool):
-    logger.info(f"📅 Airbnb {jour.isoformat()} loué={loue}")
-    
-    cursor.execute(
-        """
-        INSERT INTO airbnb_loue (jour, loue)
-        VALUES (%s, %s)
-        ON DUPLICATE KEY UPDATE loue = VALUES(loue)
-        """,
-        (jour.isoformat(), loue)
-    )
 
 
 def to_bool(value):

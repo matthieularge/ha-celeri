@@ -87,8 +87,14 @@ def loue_sync_calendar():
 
         tz_paris = zoneinfo.ZoneInfo("Europe/Paris")
         today = datetime.now(tz_paris).date()
-        tomorrow = today + timedelta(days=1)
-        check_dates = [today, tomorrow]
+        #tomorrow = today + timedelta(days=1)
+        #check_dates = [today, tomorrow]
+        first_next_month = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
+        first_month_after = (first_next_month + timedelta(days=32)).replace(day=1)
+        end_next_month = first_month_after - timedelta(days=1)
+        nb_days = (end_next_month - today).days + 1
+        check_dates = [today + timedelta(days=i) for i in range(nb_days)]
+        
 
         for url in [AIRBNB_CAL_URL, AIRBNB_CAL_URL2]:
             events = get_relevant_events(url, check_dates)

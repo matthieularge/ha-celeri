@@ -355,9 +355,7 @@ def build_html(data: dict) -> str:
     today = data["today"]
     titre_jour = f'{FR_DAYS[today.weekday()].capitalize()} {today.strftime("%d/%m/%Y")}'
 
-    return f"""<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+    return f"""
 <body style="margin:0;padding:0;background:#e9ecef;font-family:Arial,Helvetica,sans-serif;color:#222;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#e9ecef;">
 <tr><td align="center" style="padding:20px 10px;">
@@ -383,8 +381,7 @@ def build_html(data: dict) -> str:
   </table>
 </td></tr>
 </table>
-</body>
-</html>"""
+</body>"""
 
 
 @app.get("/airbnb/reservations", response_class=HTMLResponse)

@@ -166,6 +166,77 @@ def upsert_loue_date(cursor, jour: date, loue: bool):
 
 
 
+FR_DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+
+
+def to_date(value) -> date:
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    return datetime.strptime(str(value), "%Y-%m-%d").date()
+
+
+def build_stays(nights: list) -> list:
+    """Regroupe les nuits louées consécutives en séjours."""
+    stays = []
+    for n in sorted(nights):
+        if stays and n == stays[-1]["last"] + timedelta(days=1):
+            stays[-1]["last"] = n
+        else:
+            stays.append({"first": n, "last": n})
+    for s in stays:
+        s["start"] = s["first"]                      # jour d'arrivée
+        s["end"] = s["last"] + timedelta(days=1)     # jour de départ
+    return stays
+
+
+def serialize_stay(s: dict) -> dict:
+    return {
+        "arrivee": s["start"].isoformat(),
+        "jour_arrivee": FR_DAYS[s["start"].weekday()],
+        "depart": s["end"].isoformat(),
+        "jour_depart": FR_DAYS[s["end"].weekday()],
+        "nuits": (s["end"] - s["start"]).days,
+    }
+
+
+def build_week(stays: list, nights: set, monday: date) -> dict:
+    sunday = monday + timedelta(days=6)
+    jours = []
+    for i in range(7):
+        d = monday + timedelta(days=i)
+        jours.append({
+            "date": d.isoformat(),
+            "jour": FR_DAYS[d.weekday()],
+            "loue": d in nights,
+            "arrivee": any(s["start"] == d for s in stays),
+            "depart": any(s["end"] == d for s in stays),
+        })
+
+    in_week = [s for s in stays if s["first"] <= sunday and s["last"] >= monday]
+    return {
+        "du": monday.isoformat(),
+        "au": sunday.isoformat(),
+        "nb_reservations": len(in_week),
+        "nb_nuits": sum(1 for j in jours if j["loue"]),
+        "reservations": [serialize_stay(s) for s in in_week],
+        "jours": jours,
+    }
+
+
+def build_period_stats(stays: list, nights: set, p_start: date, p_end: date) -> dict:
+    """p_start et p_end inclus."""
+    touching = [s for s in stays if s["first"] <= p_end and s["last"] >= p_start]
+    nb_nuits = sum(1 for n in nights if p_start <= n <= p_end)
+    return {
+        "du": p_start.isoformat(),
+        "au": p_end.isoformat(),
+        "nb_reservations": len(touching),
+        "nb_nuits": nb_nuits,
+        "reservations": [serialize_stay(s) for s in touching],
+    }
+
 
 MOIS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
            "août", "septembre", "octobre", "novembre", "décembre"]

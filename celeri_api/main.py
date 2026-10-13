@@ -13,8 +13,7 @@ import mysql.connector
 import time
 from threading import Lock
 import zoneinfo
-from fastapi.responses import HTMLResponse
-from html import escape
+
 
 
 
@@ -294,107 +293,71 @@ def fmt_fr(iso: str) -> str:
     d = date.fromisoformat(iso)
     return f"{FR_DAYS[d.weekday()]} {d.strftime('%d/%m')}"
 
+from fastapi.responses import PlainTextResponse
 
-def html_week(titre: str, week: dict) -> str:
-    rows = ""
-    for j in week["jours"]:
-        if j["loue"]:
-            bg, statut = "#d4edda", "Loué"
-        else:
-            bg, statut = "#f5f5f5", "Libre"
-        notes = []
-        if j["arrivee"]:
-            notes.append("➡️ Arrivée")
-        if j["depart"]:
-            notes.append("⬅️ Départ")
-        d = date.fromisoformat(j["date"])
-        rows += (
-            f'<tr style="background:{bg};">'
-            f'<td style="padding:8px 12px;border-bottom:1px solid #ffffff;"><b>{escape(j["jour"].capitalize())}</b> {d.strftime("%d/%m")}</td>'
-            f'<td style="padding:8px 12px;border-bottom:1px solid #ffffff;">{statut}</td>'
-            f'<td style="padding:8px 12px;border-bottom:1px solid #ffffff;">{" · ".join(notes)}</td>'
-            f'</tr>'
-        )
+
+def plural(n: int, mot: str) -> str:
+    return f"{n} {mot}{'s' if n > 1 else ''}"
+
+
+def text_week(titre: str, week: dict) -> str:
+    lignes = [
+        titre.upper(),
+        f"du {fmt_fr(week['du'])} au {fmt_fr(week['au'])} : "
+        f"{plural(week['nb_reservations'], 'réservation')}, {plural(week['nb_nuits'], 'nuit')}",
+    ]
 
     if week["reservations"]:
-        resa = "".join(
-            f'<li style="margin:4px 0;">{escape(fmt_fr(r["arrivee"]))} → {escape(fmt_fr(r["depart"]))} '
-            f'({r["nuits"]} nuit{"s" if r["nuits"] > 1 else ""})</li>'
-            for r in week["reservations"]
-        )
-        resa_html = f'<ul style="margin:8px 0 12px 0;padding-left:20px;">{resa}</ul>'
+        for r in week["reservations"]:
+            lignes.append(
+                f"  * {fmt_fr(r['arrivee'])} -> {fmt_fr(r['depart'])} ({plural(r['nuits'], 'nuit')})"
+            )
     else:
-        resa_html = '<p style="margin:8px 0 12px 0;color:#777;">Aucune réservation.</p>'
+        lignes.append("  Aucune réservation.")
 
-    return (
-        f'<h2 style="font-size:18px;margin:24px 0 4px 0;color:#222;">{escape(titre)}</h2>'
-        f'<p style="margin:0;color:#777;font-size:13px;">du {fmt_fr(week["du"])} au {fmt_fr(week["au"])} '
-        f'— {week["nb_reservations"]} réservation{"s" if week["nb_reservations"] > 1 else ""}, '
-        f'{week["nb_nuits"]} nuit{"s" if week["nb_nuits"] > 1 else ""}</p>'
-        f'{resa_html}'
-        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
-        f'style="border-collapse:collapse;font-size:14px;">{rows}</table>'
-    )
+    lignes.append("")
+    for j in week["jours"]:
+        d = date.fromisoformat(j["date"])
+        statut = "Loué " if j["loue"] else "Libre"
+        notes = []
+        if j["arrivee"]:
+            notes.append("arrivée")
+        if j["depart"]:
+            notes.append("départ")
+        suffixe = f" ({', '.join(notes)})" if notes else ""
+        lignes.append(f"  {j['jour'].capitalize():<9} {d.strftime('%d/%m')}  {statut}{suffixe}")
 
-
-def html_stat_card(titre: str, stats: dict) -> str:
-    return (
-        f'<td width="50%" valign="top" style="padding:6px;">'
-        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
-        f'style="background:#eef3fb;border-radius:8px;">'
-        f'<tr><td style="padding:14px;text-align:center;">'
-        f'<div style="font-size:13px;color:#555;">{escape(titre)}</div>'
-        f'<div style="font-size:32px;font-weight:bold;color:#1a4fa0;margin:6px 0;">{stats["nb_reservations"]}</div>'
-        f'<div style="font-size:13px;color:#555;">réservation{"s" if stats["nb_reservations"] > 1 else ""} '
-        f'· {stats["nb_nuits"]} nuit{"s" if stats["nb_nuits"] > 1 else ""}</div>'
-        f'</td></tr></table></td>'
-    )
+    return "\n".join(lignes)
 
 
-def build_html(data: dict) -> str:
+def build_text(data: dict) -> str:
     today = data["today"]
-    titre_jour = f'{FR_DAYS[today.weekday()].capitalize()} {today.strftime("%d/%m/%Y")}'
+    fin = data["fin_du_mois"]
+    prochain = data["mois_prochain"]
 
-    return f"""
-<body style="margin:0;padding:0;background:#e9ecef;font-family:Arial,Helvetica,sans-serif;color:#222;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#e9ecef;">
-<tr><td align="center" style="padding:20px 10px;">
-  <table role="presentation" width="600" cellpadding="0" cellspacing="0"
-         style="width:100%;max-width:600px;background:#ffffff;border-radius:10px;">
-    <tr><td style="background:#ff5a5f;color:#ffffff;padding:20px;border-radius:10px 10px 0 0;">
-      <div style="font-size:22px;font-weight:bold;">🏠 Réservations Airbnb</div>
-      <div style="font-size:14px;margin-top:4px;">{escape(titre_jour)}</div>
-    </td></tr>
-    <tr><td style="padding:10px 20px 24px 20px;">
-
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
-        <tr>
-          {html_stat_card(f"D'ici fin {data['mois_en_cours_nom']}", data["fin_du_mois"])}
-          {html_stat_card(data["mois_prochain_nom"].capitalize(), data["mois_prochain"])}
-        </tr>
-      </table>
-
-      {html_week("Semaine en cours", data["semaine_en_cours"])}
-      {html_week("Semaine prochaine", data["semaine_prochaine"])}
-
-    </td></tr>
-  </table>
-</td></tr>
-</table>
-</body>"""
+    parties = [
+        f"RÉSERVATIONS AIRBNB - {FR_DAYS[today.weekday()].capitalize()} {today.strftime('%d/%m/%Y')}",
+        "",
+        f"D'ici fin {data['mois_en_cours_nom']} : "
+        f"{plural(fin['nb_reservations'], 'réservation')}, {plural(fin['nb_nuits'], 'nuit')}",
+        f"{data['mois_prochain_nom'].capitalize()} : "
+        f"{plural(prochain['nb_reservations'], 'réservation')}, {plural(prochain['nb_nuits'], 'nuit')}",
+        "",
+        text_week("Semaine en cours", data["semaine_en_cours"]),
+        "",
+        text_week("Semaine prochaine", data["semaine_prochaine"]),
+    ]
+    return "\n".join(parties)
 
 
-@app.get("/airbnb/reservations", response_class=HTMLResponse)
+@app.get("/airbnb/reservations", response_class=PlainTextResponse)
 def airbnb_reservations():
     try:
         data = compute_airbnb_reservations()
-        return HTMLResponse(content=build_html(data))
+        return PlainTextResponse(content=build_text(data))
     except Exception as e:
         logger.error(f"❌ Erreur GET /airbnb/reservations : {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
 
 
 

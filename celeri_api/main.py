@@ -1,20 +1,17 @@
-import logging
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
-from datetime import date, datetime, timedelta
-from fastapi.responses import JSONResponse
-from icalendar import Calendar
-import requests
-from enum import Enum
-from typing import Optional
 import json
 import logging
-import mysql.connector
 import time
-from threading import Lock
 import zoneinfo
+from datetime import date, datetime, timedelta
+from enum import Enum
 
-
+import mysql.connector
+import requests
+from fastapi import FastAPI, HTTPException
+from fastapi.requests import Request
+from fastapi.responses import PlainTextResponse
+from icalendar import Calendar
+from pydantic import BaseModel, Field
 
 
 # TODO
@@ -47,13 +44,16 @@ def get_connection():
 
 
 AIRBNB_CAL_URL = "https://www.airbnb.fr/calendar/ical/32053854.ics?s=bee9bbc3a51315a4fa27ea2a09621aef"
-AIRBNB_CAL_URL2 = "https://www.airbnb.fr/calendar/ical/32057490.ics?s=0f91f1dc1e6c7f6ba3ddf82e0ca59c92"
+AIRBNB_CAL_URL_STUDIO = "https://www.airbnb.fr/calendar/ical/32057490.ics?s=0f91f1dc1e6c7f6ba3ddf82e0ca59c92"
 
+AIRBNB_CALENDARS = {
+    "complet": AIRBNB_CAL_URL,
+    "studio": AIRBNB_CAL_URL_STUDIO,
+}
+LOGEMENTS = tuple(AIRBNB_CALENDARS)  # ("complet", "studio")
 
 app = FastAPI()
 
-from fastapi.requests import Request
-from fastapi.responses import PlainTextResponse
 
 
 @app.middleware("http")
@@ -76,37 +76,34 @@ async def log_requests(request: Request, call_next):
 def read_root():
     logger.debug("GET / called")
     return {"message": "Hello from Celeri addon"}
-
+    
 
 @app.post("/loue_sync_calendar")
 def loue_sync_calendar():
+    conn = None
     try:
         conn = get_connection()
         cur = conn.cursor()
 
         tz_paris = zoneinfo.ZoneInfo("Europe/Paris")
         today = datetime.now(tz_paris).date()
-        #tomorrow = today + timedelta(days=1)
-        #check_dates = [today, tomorrow]
         first_next_month = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
         first_month_after = (first_next_month + timedelta(days=32)).replace(day=1)
         end_next_month = first_month_after - timedelta(days=1)
         nb_days = (end_next_month - today).days + 1
         check_dates = [today + timedelta(days=i) for i in range(nb_days)]
-        
 
-        for url in [AIRBNB_CAL_URL, AIRBNB_CAL_URL2]:
+        for logement, url in AIRBNB_CALENDARS.items():
             events = get_relevant_events(url, check_dates)
             for check_date in check_dates:
-                is_res = any(e['start'] <= check_date < e['end'] and "Reserved" in e['summary'] 
+                is_res = any(e['start'] <= check_date < e['end'] and "Reserved" in e['summary']
                              for e in events)
-                logger.info(f"Airbnb {url} - {check_date} - reserved: {is_res}")
+                logger.info(f"Airbnb {logement} - {check_date} - reserved: {is_res}")
                 if is_res:
-                    upsert_loue_date(cur, check_date, is_res)
+                    upsert_loue_date(cur, check_date, logement)
 
         conn.commit()
         return {"status": "success", "message": "Synchronisation terminée."}
-
     except Exception as e:
         logger.error(f"❌ Erreur POST /loue_sync_calendar : {e}")
         raise HTTPException(status_code=500, detail="Erreur base de données")
@@ -155,20 +152,23 @@ def get_relevant_events(cal_url: str, dates: list):
         return []
 
 
-def upsert_loue_date(cursor, jour: date, loue: bool):
-    logger.info(f"📅 Airbnb {jour.isoformat()} loué={loue}")
-    
-    cursor.execute(
+def upsert_loue_date(cursor, jour: date, logement: str):
+    logger.info(f"📅 Airbnb {jour.isoformat()} logement={logement}")
+    if logement == "complet":
+        sql = """
+            INSERT INTO airbnb_loue (jour, loue, loue_complet)
+            VALUES (%s, 1, 1)
+            ON DUPLICATE KEY UPDATE loue = 1, loue_complet = 1, loue_studio = 0
         """
-        INSERT INTO airbnb_loue (jour, loue)
-        VALUES (%s, %s)
-        ON DUPLICATE KEY UPDATE loue = VALUES(loue)
-        """,
-        (jour.isoformat(), loue)
-    )
-
-
-
+    else:  # studio : ne prend pas la place d'un jour déjà en complet
+        sql = """
+            INSERT INTO airbnb_loue (jour, loue, loue_studio)
+            VALUES (%s, 1, 1)
+            ON DUPLICATE KEY UPDATE
+                loue_studio = IF(loue_complet = 1, 0, 1),
+                loue = 1
+        """
+    cursor.execute(sql, (jour.isoformat(),))
 
 
 FR_DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -203,10 +203,11 @@ def serialize_stay(s: dict) -> dict:
         "depart": s["end"].isoformat(),
         "jour_depart": FR_DAYS[s["end"].weekday()],
         "nuits": (s["end"] - s["start"]).days,
+        "logement": s.get("logement"),
     }
 
 
-def build_week(stays: list, nights: set, monday: date) -> dict:
+def build_week(stays: list, nights: dict, monday: date) -> dict:
     sunday = monday + timedelta(days=6)
     jours = []
     for i in range(7):
@@ -215,6 +216,7 @@ def build_week(stays: list, nights: set, monday: date) -> dict:
             "date": d.isoformat(),
             "jour": FR_DAYS[d.weekday()],
             "loue": d in nights,
+            "logement": nights.get(d),
             "arrivee": any(s["start"] == d for s in stays),
             "depart": any(s["end"] == d for s in stays),
         })
@@ -230,7 +232,7 @@ def build_week(stays: list, nights: set, monday: date) -> dict:
     }
 
 
-def build_period_stats(stays: list, nights: set, p_start: date, p_end: date) -> dict:
+def build_period_stats(stays: list, nights: dict, p_start: date, p_end: date) -> dict:
     """p_start et p_end inclus."""
     touching = [s for s in stays if s["first"] <= p_end and s["last"] >= p_start]
     nb_nuits = sum(1 for n in nights if p_start <= n <= p_end)
@@ -246,6 +248,10 @@ def build_period_stats(stays: list, nights: set, p_start: date, p_end: date) -> 
 MOIS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
            "août", "septembre", "octobre", "novembre", "décembre"]
 
+
+
+
+LOGEMENTS_RAPPORT = (("complet", 1), ("studio", 2))  # (nom, index de colonne dans le SELECT)
 
 def compute_airbnb_reservations() -> dict:
     tz_paris = zoneinfo.ZoneInfo("Europe/Paris")
@@ -266,16 +272,35 @@ def compute_airbnb_reservations() -> dict:
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "SELECT jour FROM airbnb_loue WHERE loue = 1 AND jour BETWEEN %s AND %s ORDER BY jour",
+            """
+            SELECT jour, loue_complet, loue_studio
+            FROM airbnb_loue
+            WHERE (loue_complet = 1 OR loue_studio = 1)
+              AND jour BETWEEN %s AND %s
+            ORDER BY jour
+            """,
             (range_start, range_end)
         )
-        nights_list = [to_date(row[0]) for row in cursor.fetchall()]
+        rows = cursor.fetchall()
     finally:
         cursor.close()
         conn.close()
 
-    nights = set(nights_list)
-    stays = build_stays(nights_list)
+    # Séjours construits par logement, puis fusionnés dans une seule liste
+    stays = []
+    nights = {}  # date -> "complet" | "studio"
+    for logement, idx in LOGEMENTS_RAPPORT:
+        nights_list = [
+            to_date(r[0]) for r in rows
+            if r[idx] and (logement == "complet" or not r[1])
+        ]
+        for n in nights_list:
+            nights[n] = logement
+        for s in build_stays(nights_list):
+            s["logement"] = logement
+            stays.append(s)
+    stays.sort(key=lambda s: s["start"])
+
     logger.info(f"📅 {len(stays)} séjours trouvés en base ({range_start} -> {range_end})")
 
     return {
@@ -293,12 +318,15 @@ def fmt_fr(iso: str) -> str:
     d = date.fromisoformat(iso)
     return f"{FR_DAYS[d.weekday()]} {d.strftime('%d/%m')}"
 
-from fastapi.responses import PlainTextResponse
 
 
 def plural(n: int, mot: str) -> str:
     return f"{n} {mot}{'s' if n > 1 else ''}"
 
+
+
+
+LOGEMENT_LABELS = {"complet": "Complet", "studio": "Studio"}
 
 def text_week(titre: str, week: dict) -> str:
     lignes = [
@@ -309,8 +337,9 @@ def text_week(titre: str, week: dict) -> str:
 
     if week["reservations"]:
         for r in week["reservations"]:
+            label = LOGEMENT_LABELS.get(r["logement"], "?")
             lignes.append(
-                f"  * {fmt_fr(r['arrivee'])} -> {fmt_fr(r['depart'])} ({plural(r['nuits'], 'nuit')})"
+                f"  * {label} : {fmt_fr(r['arrivee'])} -> {fmt_fr(r['depart'])} ({plural(r['nuits'], 'nuit')})"
             )
     else:
         lignes.append("  Aucune réservation.")
@@ -318,17 +347,16 @@ def text_week(titre: str, week: dict) -> str:
     lignes.append("")
     for j in week["jours"]:
         d = date.fromisoformat(j["date"])
-        statut = "Loué " if j["loue"] else "Libre"
+        statut = LOGEMENT_LABELS.get(j["logement"], "?") if j["loue"] else "Libre"
         notes = []
         if j["arrivee"]:
             notes.append("arrivée")
         if j["depart"]:
             notes.append("départ")
         suffixe = f" ({', '.join(notes)})" if notes else ""
-        lignes.append(f"  {j['jour'].capitalize():<9} {d.strftime('%d/%m')}  {statut}{suffixe}")
+        lignes.append(f"  {j['jour'].capitalize():<9} {d.strftime('%d/%m')}  {statut:<7}{suffixe}")
 
     return "\n".join(lignes)
-
 
 def build_text(data: dict) -> str:
     today = data["today"]
@@ -348,7 +376,7 @@ def build_text(data: dict) -> str:
         text_week("Semaine prochaine", data["semaine_prochaine"]),
     ]
     return "\n".join(parties)
-
+    
 
 @app.get("/airbnb/reservations", response_class=PlainTextResponse)
 def airbnb_reservations():
@@ -453,17 +481,20 @@ def execute_get_cheminee(cursor, conn, jour: str) -> bool:
         return False
 
 def execute_get_loue(cursor, conn, jour: str) -> bool:
-    cursor.execute("SELECT loue FROM airbnb_loue WHERE jour = %s", (jour,))
+    return execute_get_loue_detail(cursor, conn, jour)["loue"]
+
+def execute_get_loue_detail(cursor, conn, jour: str) -> dict:
+    cursor.execute(
+        "SELECT loue, loue_complet, loue_studio FROM airbnb_loue WHERE jour = %s", (jour,)
+    )
     row = cursor.fetchone()
     if row:
-        logger.debug(f"✔️ Date trouvée: {jour} => loue={bool(row[0])}")
-        return bool(row[0])
-    else:
-        logger.info(f"❗ Date {jour} absente — ajout avec loue=False")
-        cursor.execute("INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)", (jour, False))
-        conn.commit()
-        return False
+        return {"loue": bool(row[0]), "complet": bool(row[1]), "studio": bool(row[2])}
 
+    logger.info(f"❗ Date {jour} absente — ajout avec loue=False")
+    cursor.execute("INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)", (jour, False))
+    conn.commit()
+    return {"loue": False, "complet": False, "studio": False}
 
 @app.get("/api/status_du_jour")
 def get_status_du_jour():
@@ -482,9 +513,12 @@ def get_status_du_jour():
         presence = execute_get_presence(cursor, conn, jour_str)
         teletravail = execute_get_teletravail(cursor, conn, jour_str)
         cheminee = execute_get_cheminee(cursor, conn, jour_str)
-        airbnb_hier = execute_get_loue(cursor, conn, hier_str)
-        airbnb_aujourdhui = execute_get_loue(cursor, conn, jour_str)
-        airbnb_demain = execute_get_loue(cursor, conn, demain_str)
+        detail_hier = execute_get_loue_detail(cursor, conn, hier_str)
+        detail_auj = execute_get_loue_detail(cursor, conn, jour_str)
+        detail_demain = execute_get_loue_detail(cursor, conn, demain_str)
+        airbnb_hier = detail_hier["loue"]
+        airbnb_aujourdhui = detail_auj["loue"]
+        airbnb_demain = detail_demain["loue"]
 
         logger.info(f"📊 {jour_str} : Présence {presence} - Teletravail {teletravail} - Airbnb {airbnb_aujourdhui} - Airbnb demain {airbnb_demain}")
 
@@ -495,7 +529,11 @@ def get_status_du_jour():
             "cheminee": cheminee,
             "airbnb_hier": airbnb_hier,
             "airbnb_aujourdhui": airbnb_aujourdhui,
-            "airbnb_demain": airbnb_demain
+            "airbnb_demain": airbnb_demain,
+            "airbnb_aujourdhui_complet": detail_auj["complet"],
+            "airbnb_aujourdhui_studio": detail_auj["studio"],
+            "airbnb_demain_complet": detail_demain["complet"],
+            "airbnb_demain_studio": detail_demain["studio"]
         }
 
     except Exception as e:
@@ -655,10 +693,11 @@ def update_cheminee(jour: str, payload: dict):
         cursor.close()
         conn.close()
 
-
 class LoueEntry(BaseModel):
     jour: date
-    loue: bool
+    loue: bool = False
+    complet: bool = False
+    studio: bool = False
 
 @app.get("/loue/{jour}")
 def get_loue(jour: str):
@@ -666,33 +705,47 @@ def get_loue(jour: str):
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        loue = execute_get_loue(cursor, conn, jour)
-        return {"jour": jour, "loue": loue}
+        detail = execute_get_loue_detail(cursor, conn, jour)
+        return {"jour": jour, **detail}
     except Exception as e:
         logger.error(f"❌ Erreur GET /loue/{jour}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
         conn.close()
-
+        
 @app.post("/loue")
 def add_loue(entry: LoueEntry):
     logger.debug(f"➕ POST /loue : {entry}")
+    complet, studio = entry.complet, entry.studio
+    if entry.loue and not complet and not studio:
+        # Comportement historique : "loue" seul => logement complet
+        complet = True
+    loue = complet or studio
+    if complet and studio:
+        studio = False  # complet prévaut
+        loue = True
+
     conn = get_connection()
     cursor = conn.cursor()
-
     try:
         cursor.execute(
-            "INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)",
-            (entry.jour, entry.loue)
+            """
+            INSERT INTO airbnb_loue (jour, loue, loue_complet, loue_studio)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (entry.jour, loue, complet, studio)
         )
         conn.commit()
-        logger.info(f"➕ Date absente: {entry.jour} => loue={entry.loue}")
-        return {"message": "Ajouté"}
+        logger.info(f"➕ Date ajoutée: {entry.jour} => complet={complet} studio={studio}")
+        return {"message": "Ajouté", "jour": entry.jour.isoformat(),
+                "loue": loue, "complet": complet, "studio": studio}
     except mysql.connector.IntegrityError:
+        conn.rollback()
         logger.warning("⚠️ Date déjà existante")
         raise HTTPException(status_code=409, detail="Date déjà existante")
     except Exception as e:
+        conn.rollback()
         logger.error(f"❌ Erreur POST /loue : {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -702,29 +755,39 @@ def add_loue(entry: LoueEntry):
 @app.put("/loue/{jour}")
 def update_loue(jour: str, payload: dict):
     logger.debug(f"🛠️ PUT /loue/{jour} : {payload}")
-    loue = payload.get("loue", False)
+    complet = payload.get("complet")
+    studio = payload.get("studio")
+
+    if complet is None and studio is None:
+        # Comportement historique : "loue" seul => on l'applique au logement complet
+        loue = to_bool(payload.get("loue", False))
+        complet, studio = loue, False
+    else:
+        complet = to_bool(complet or False)
+        studio = to_bool(studio or False)
+        loue = complet or studio
+
+    if complet and studio:
+        studio = False  # complet prévaut
+        loue = True
+        
     conn = get_connection()
     cursor = conn.cursor()
-
     try:
-        cursor.execute("SELECT COUNT(*) FROM airbnb_loue WHERE jour = %s", (jour,))
-        exists = cursor.fetchone()[0] > 0
-
-        if exists:
-            cursor.execute(
-                "UPDATE airbnb_loue SET loue = %s WHERE jour = %s",
-                (loue, jour)
-            )
-            logger.info(f"✔️ Date mise à jour : {jour} => loue={loue}")
-        else:
-            cursor.execute(
-                "INSERT INTO airbnb_loue (jour, loue) VALUES (%s, %s)",
-                (jour, loue)
-            )
-            logger.info(f"➕ Date absente: {jour} => loue={loue}")
-
+        cursor.execute(
+            """
+            INSERT INTO airbnb_loue (jour, loue, loue_complet, loue_studio)
+            VALUES (%s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                loue = VALUES(loue),
+                loue_complet = VALUES(loue_complet),
+                loue_studio = VALUES(loue_studio)
+            """,
+            (jour, loue, complet, studio)
+        )
         conn.commit()
-        return {"message": "Mise à jour effectuée", "jour": jour, "loue": loue}
+        return {"message": "Mise à jour effectuée", "jour": jour,
+                "loue": loue, "complet": complet, "studio": studio}
     except Exception as e:
         conn.rollback()
         logger.error(f"❌ Erreur PUT /loue/{jour} : {e}")
@@ -732,6 +795,8 @@ def update_loue(jour: str, payload: dict):
     finally:
         cursor.close()
         conn.close()
+
+
 
 
 def to_bool(value):
@@ -747,55 +812,80 @@ def to_bool(value):
 @app.post("/loue/init")
 def init_dates(payload: dict):
     logger.info(f"📅 POST /loue/init : {payload}")
+
+    # --- Validation des paramètres (hors try pour garder les 400) ---
     try:
         start = datetime.strptime(payload["start"], "%Y-%m-%d").date()
         end = datetime.strptime(payload["end"], "%Y-%m-%d").date()
-        resa = to_bool(payload.get("resa", False))
-        weekend = to_bool(payload.get("weekend", False))
+    except (KeyError, ValueError, TypeError):
+        raise HTTPException(status_code=400, detail="start et end requis au format YYYY-MM-DD")
 
-        logger.info(f"Airbnb init dates {resa} entre {start} et {end} (weekend {weekend})")
+    if end < start:
+        logger.warning("⛔ Date de fin antérieure à la date de début")
+        raise HTTPException(status_code=400, detail="end date must be after start date")
 
-        if end < start:
-            logger.warning("⛔ Date de fin antérieure à la date de début")
-            raise HTTPException(status_code=400, detail="end date must be after start date")
+    logement = payload.get("logement", "complet")
+    if logement not in LOGEMENTS:
+        raise HTTPException(status_code=400, detail="logement doit être 'complet' ou 'studio'")
 
+    resa = to_bool(payload.get("resa", False))
+    weekend = to_bool(payload.get("weekend", False))
+
+    logger.info(f"Airbnb init {logement} resa={resa} entre {start} et {end} (weekend {weekend})")
+
+    if logement == "complet":
+        query = """
+            INSERT INTO airbnb_loue (jour, loue, loue_complet)
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                loue_complet = VALUES(loue_complet),
+                loue_studio = IF(VALUES(loue_complet) = 1, 0, loue_studio),
+                loue = (loue_complet OR loue_studio)
+        """
+    else:  # studio
+        query = """
+            INSERT INTO airbnb_loue (jour, loue, loue_studio)
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                loue_studio = IF(VALUES(loue_studio) = 1 AND loue_complet = 1, 0, VALUES(loue_studio)),
+                loue = (loue_complet OR loue_studio)
+        """
+
+    conn = None
+    cursor = None
+    try:
         conn = get_connection()
         cursor = conn.cursor()
 
         current = start
         count = 0
         while current <= end:
-            is_weekend = current.weekday() >= 5  # 5 = Saturday, 6 = Sunday
+            is_weekend = current.weekday() >= 5
             statut = weekend if is_weekend else resa
-            cursor.execute(
-                """
-                INSERT INTO airbnb_loue (jour, loue)
-                VALUES (%s, %s)
-                ON DUPLICATE KEY UPDATE loue = VALUES(loue)
-                """,
-                (current, statut)
-            )
+            cursor.execute(query, (current, statut, statut))
             current += timedelta(days=1)
             count += 1
 
         conn.commit()
-        logger.info(f"✅ {count} jours {resa} entre {start} et {end} (weekend {weekend})")
-        return {"status": "ok", "message": f"{count} jours traités"}
+        logger.info(f"✅ {count} jours traités ({logement}) entre {start} et {end}")
+        return {"status": "ok", "message": f"{count} jours traités", "logement": logement}
     except Exception as e:
+        if conn:
+            conn.rollback()
         logger.error(f"❌ Erreur dans /loue/init : {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        cursor.close()
-        conn.close()
-
-
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+            
 
 class CapteurHeureUpdate(BaseModel):
     capteur: str
     jour: date
     heure: int  # entre 0 et 23
     valeur: float
-
 
 @app.post("/capteurs/heure")
 def update_capteur_heure(payload: CapteurHeureUpdate):
@@ -953,7 +1043,11 @@ def airbnb_par_annee():
         conn = get_connection()
         cur = conn.cursor(dictionary=True)
         cur.execute("""
-            SELECT YEAR(jour) AS annee, COUNT(*) AS nb_jours_loues
+            SELECT
+                YEAR(jour) AS annee,
+                COUNT(*) AS nb_jours_loues,
+                CAST(SUM(loue_complet) AS UNSIGNED) AS nb_jours_complet,
+                CAST(SUM(loue_studio) AS UNSIGNED) AS nb_jours_studio
             FROM airbnb_loue
             WHERE loue = 1
             GROUP BY YEAR(jour)
@@ -975,7 +1069,9 @@ def airbnb_par_mois_et_annee():
             SELECT
                 YEAR(jour) AS annee,
                 MONTH(jour) AS mois,
-                COUNT(*) AS nb_jours_loues
+                COUNT(*) AS nb_jours_loues,
+                CAST(SUM(loue_complet) AS UNSIGNED) AS nb_jours_complet,
+                CAST(SUM(loue_studio) AS UNSIGNED) AS nb_jours_studio
             FROM airbnb_loue
             WHERE loue = 1
             GROUP BY YEAR(jour), MONTH(jour)

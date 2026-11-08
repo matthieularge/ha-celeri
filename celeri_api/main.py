@@ -480,9 +480,6 @@ def execute_get_cheminee(cursor, conn, jour: str) -> bool:
         conn.commit()
         return False
 
-def execute_get_loue(cursor, conn, jour: str) -> bool:
-    return execute_get_loue_detail(cursor, conn, jour)["loue"]
-
 def execute_get_loue_detail(cursor, conn, jour: str) -> dict:
     cursor.execute(
         "SELECT loue, loue_complet, loue_studio FROM airbnb_loue WHERE jour = %s", (jour,)
@@ -528,12 +525,14 @@ def get_status_du_jour():
             "teletravail": teletravail,
             "cheminee": cheminee,
             "airbnb_hier": airbnb_hier,
+            "airbnb_hier_complet": detail_hier["complet"],
+            "airbnb_hier_studio": detail_hier["studio"],
             "airbnb_aujourdhui": airbnb_aujourdhui,
-            "airbnb_demain": airbnb_demain,
             "airbnb_aujourdhui_complet": detail_auj["complet"],
             "airbnb_aujourdhui_studio": detail_auj["studio"],
+            "airbnb_demain": airbnb_demain,
             "airbnb_demain_complet": detail_demain["complet"],
-            "airbnb_demain_studio": detail_demain["studio"]
+            "airbnb_demain_studio": detail_demain["studio"]            
         }
 
     except Exception as e:
